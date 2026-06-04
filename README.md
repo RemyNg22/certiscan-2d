@@ -6,11 +6,18 @@
 
 L'application vérifie l'intégrité et la cohérence des documents officiels sécurisés par un code **2D-Doc**, standard français développé par l'ANTS (Agence Nationale des Titres Sécurisés) et utilisé sur les documents administratifs courants :
 
-- Avis d'imposition (DGFIP)
-- Bulletins de salaire
-- Factures d'énergie (EDF, Engie...)
-- Attestations administratives (CAF, Ameli...)
-- Documents d'entreprise
+- Justificatif de domicile
+- Documents bancaires
+- Justificatif fiscal
+- Justificatif de ressources
+- Justificatif d'emploi
+- Justificatif d'identité
+- Justificatif de véhicule
+- Certificat d'immatriculation
+- Justificatif permis de conduire
+- Justificatif académique
+- Justificatif médical et de santé
+- Justificatif d'activité
 
 ---
 
@@ -19,6 +26,8 @@ L'application vérifie l'intégrité et la cohérence des documents officiels s�
 Le 2D-Doc est un **Data Matrix signé électroniquement** (ECDSA P-256/P-384/P-521). Il encode les données clés du document (nom, montant, émetteur, dates) ainsi qu'une signature cryptographique. La clé privée appartient à l'organisme émetteur et les clés publiques sont distribuées librement via la **TSL (Trusted Service List)** publiée par l'ANTS.
 
 La vérification est donc entièrement publique : aucune convention ni accréditation n'est requise pour vérifier un 2D-Doc existant.
+
+La présente application utilise d'ailleurs les spécifications techniques des documents utilisées dans le document suivant, émis par l'Etat Français : [https://ants.gouv.fr/files/1ba15231-0320-40da-819a-655888f43eb9/ants_2d-doc_cabspec_v334.pdf](Spécifications Techniques des Codes à Barres 2D-Code)
 
 ---
 
