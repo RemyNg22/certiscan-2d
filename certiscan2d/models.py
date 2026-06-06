@@ -582,3 +582,18 @@ DOC_TYPE_MAP = {
     "B0": Diplome,
     "B1": AttestationCVE,
 }
+
+# =================
+# Résultat de l'analyse
+
+@dataclass
+class VerificationResult:
+    statut : VerificationStatus
+    message : str
+    extraction_ok : Optional[bool] = None
+    crypto_ok : Optional[bool] = None
+    coherence_ok : Optional[bool] = None
+    champs : Optional[DocFields] = None
+    details : Optional[dict] = None
+
+    
