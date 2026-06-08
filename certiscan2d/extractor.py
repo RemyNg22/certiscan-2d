@@ -2,11 +2,10 @@ import pymupdf
 import cv2
 from pathlib import Path
 import numpy as np
+import zxingcpp, pyzbar
 
-#bloc test
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = BASE_DIR.parent
-pdf_image = PROJECT_DIR / 'ants_2d-doc_cabspec_v334.pdf'
+class DataMatrixNotFoundError(Exception):
+    pass
 
 def normalisation_document(file_path : Path):
     file_path = Path(file_path)
@@ -40,3 +39,18 @@ def normalisation_document(file_path : Path):
             raise ValueError("Format invalide ou fichier illisible")
 
         return [img]
+    
+
+def traitement_image(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #convertir en niveau de gris
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU) # binarisation auto pour renforcer le contraste entre texte/2d code et arrière plan
+
+    return {"gray": gray,
+            "binary" : binary}
+
+
+def extract_2d_code(img):
+    pass
+
+def extract_text(img):
+    pass
