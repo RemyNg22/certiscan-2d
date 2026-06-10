@@ -3,6 +3,7 @@ import cv2
 from pathlib import Path
 import numpy as np
 import zxingcpp
+import pytesseract
 
 # création des différentes exceptions possibles
 class ExtractionError(Exception):
@@ -88,17 +89,60 @@ def extract_2d_code(gray : np.ndarray, binary: np.ndarray):
 
     unique_codes = list(set(codes))
 
+    if len(unique_codes) == 0:
+        raise DataMatrixNotFoundError("Aucun code 2D détecté")
+
     if len(unique_codes) > 1:
         raise MultipleDataMatrixFoundError(f"Plusieurs codes détectés : {unique_codes}")
     
     return unique_codes[0]
 
-def extract_text(img):
-    pass
 
+def extract_text(gray : np.ndarray, binary: np.ndarray):
+    """
+    Extraction du texte d'une image à l'aide de pytesseract 
+    dans un format avec plusieurs langues européenne
+    """
+    if gray is None or binary is None:
+        raise InvalidImageError("Image invalide (None)")
+    
+    langues = "fra+eng+deu+spa+ita"
 
-def extract_page():
-    pass
+    custom_config = f"--psm 3" # segmentation auto des pages
+
+    try:
+        decode_str = pytesseract.image_to_string(gray, lang=langues, config=custom_config)
+
+        if not decode_str.strip():
+            decode_str = pytesseract.image_to_string(binary, lang=langues, config=custom_config)
+
+        return decode_str.strip()
+    
+    except pytesseract.TesseractError as e:
+        raise RuntimeError(f"Erreur d'extraction Tesseract. Les packs de la langue du document n'est peut-être pas installé : {e}") from e
+    except Exception as exc:
+        raise RuntimeError(f"Erreur inattendue lors de l'OCR : {exc}") from exc
+
+def extract_page(img):
+    """
+    Prendre une image et retourner les données brutes extraites
+    """
+    if img is None:
+        raise InvalidImageError("Image de page invalide")
+    
+    image_traitee = traitement_image(img)
+
+    gray = image_traitee["gray"]
+    binary = image_traitee["binary"]
+
+    code_2d = extract_2d_code(gray, binary)
+    text = extract_text(gray, binary)
+
+    return {
+        "code_2d": code_2d,
+        "text": text
+    }
+
 
 def extract_document():
     pass
