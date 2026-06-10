@@ -538,7 +538,7 @@ class ActeHuissier(DocFields):
 
 
 # ================
-# MAPPING code → classe (utilisé dans parser.py)
+# MAPPING code -> classe (utilisé dans parser.py)
 
 DOC_TYPE_MAP = {
     "00": JustificatifDomicile,

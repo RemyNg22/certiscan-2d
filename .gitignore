@@ -4,3 +4,6 @@ __pycache__/
 
 # Environnement virtuel
 venv/
+
+# Test pre prod
+test_non_dispo_prod/
