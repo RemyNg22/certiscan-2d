@@ -7,3 +7,7 @@ venv/
 
 # Test pre prod
 test_non_dispo_prod/
+
+# Checkpoints ipynb
+.ipynb_checkpoints/
+notebook/.ipynb_checkpoints/
