@@ -7,14 +7,14 @@ class VerificationStatus(Enum):
     VALID = "Document valide - Données cohérentes"
     INVALID = "Échec structurel (non reconnu)"
     CRYPTO_FAIL = "Signature numérique incorrecte"
-    SUSPICIOUS = "Incohérence entre données et 2D-Code"
+    SUSPICIOUS = "Incohérence entre données et 2D-Doc"
 
 
 # Champs communs pour tous les documents
 @dataclass
 class DocFields:
     marqueur_id : str   # marqueur d'identitfication
-    version_id : str    # version du 2D-Code
+    version_id : str    # version du 2D-Doc
     ca_id : str     # identifiant de l'autorité de certification
     certif_id : str     # identifiant du certificat
     date_emission : str     # date d'émission
@@ -22,7 +22,7 @@ class DocFields:
     code_identification_doc : str   # code d'identification du document
     identifiant_perimetre : Optional[str] = None # code du périmètre à partir de la v03
     pays_emetteur : Optional[str] = None  # pays émetteur du doc
-
+    signature_brute : Optional[str] = None # signature du 2d-doc à l'état brut
 
 
 # ===============

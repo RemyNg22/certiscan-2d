@@ -117,7 +117,7 @@ def extract_text(gray: np.ndarray, binary: np.ndarray):
 
 def extract_2d_code(gray: np.ndarray, binary: np.ndarray, original: np.ndarray = None):
     """
-    Extraction des 2D codes détectés dans une image, principalement le document original.
+    Extraction des 2D-Doc détectés dans une image, principalement le document original.
     Test fait sur plusieurs représentation de l'image, plusieurs fallback si besoin
     """
     def try_decode(img):
