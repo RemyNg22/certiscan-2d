@@ -203,31 +203,116 @@ FIELD_MAP = {
 
 def parse_header(raw: str) -> dict:
     """
-    Parse les 22 premiers caractères du header 2D-Doc (ou 24 premiers 
-    à partir des 2D-Doc V03) et retourne un dict avec les champs du header.
+    Parse les premiers caractères du header 2D-Doc (nombre de caractères 
+    en fonction de la version) et retourne un dict avec les champs du header.
     """
 
     if not raw.startswith("DC"):
         raise ParseError(f"Marqueur DC absent - ce n'est pas un 2D-Doc valide : {raw[:10]}")
     
-    if len(raw) < 22:
-        raise ParseError(f"Header trop court ({len(raw)} caractères, minimum 22)")
+    version = raw[2:4]
     
-    return {
-        "marqueur_id" : raw[0:2], # toujours "DC"
-        "version_id" : raw[2:4], # ex: "04"
-        "ca_id" : raw[4:8], # ex: "FR06"
-        "certif_id" : raw[8:12], # ex: "FPE6"
-        "date_emission" : raw[12:16], # ex: "FFFF"
-        "date_signature" : raw[16:20], # ex: "2471"
-        "code_identification_doc" : raw[20:22], # ex: "28"
-        "identifiant_perimetre": raw[22:24] # ex: "01"
-    }
+    if version in ("01","02"):
+        if len(raw) < 22:
+            raise ParseError(f"Header trop court ({len(raw)} caractères, minimum 22)")
+        
+        return {
+            "marqueur_id" : raw[0:2], # toujours "DC"
+            "version_id" : version, # ex: "01"
+            "ca_id" : raw[4:8], # ex: "FR06"
+            "certif_id" : raw[8:12], # ex: "FPE6"
+            "date_emission" : raw[12:16], # ex: "FFFF"
+            "date_signature" : raw[16:20], # ex: "2471"
+            "code_identification_doc" : raw[20:22], # ex: "28"
+            "identifiant_perimetre": None,
+            "pays_emetteur" : None,
+            "_data_offset": 22
+        }
+    
+    elif version == "03":
+        if len(raw) < 24:
+            raise ParseError(f"Header v03 trop court ({len(raw)} chars, min 24)")
+        
+        return {
+            "marqueur_id" : raw[0:2],
+            "version_id" : version,
+            "ca_id" : raw[4:8],
+            "certif_id" : raw[8:12],
+            "date_emission" : raw[12:16],
+            "date_signature" : raw[16:20],
+            "code_identification_doc" : raw[20:22],
+            "identifiant_perimetre": raw[22:24],
+            "pays_emetteur" : None,
+            "_data_offset" : 24
+        }
+    
+
+    elif version == "04":
+        if len(raw) < 26:
+            raise ParseError(f"Header v04 trop court ({len(raw)} chars, min 26)")
+        
+        return {
+            "marqueur_id" : raw[0:2],
+            "version_id" : version,
+            "ca_id" : raw[4:8],
+            "certif_id" : raw[8:12],
+            "date_emission" : raw[12:16],
+            "date_signature" : raw[16:20],
+            "code_identification_doc" : raw[20:22],
+            "identifiant_perimetre": raw[22:24],
+            "pays_emetteur" : raw[24:26],
+            "_data_offset" : 26
+        }      
+
+    else:
+        raise ParseError(f"Version non supportée : '{version}' — versions gérées : 01, 02, 03, 04")
+
 
 
 def parse_champs(data_str: str) -> dict:
     """
-    Pase la partie données (après header, juste avant la signature).
-    Chaque champs = 2 caractères suivis de la valeur, séparés par <GS>.
+    Parse la partie données (après header, avant signature).
+    Plusieurs identifiants peuvent être concaténés dans un même segment GS.
+    Le RS tronque un mot en deux parties à reconstruire.
+    """
+    champs = {}
+
+    data_str = data_str.replace(RS, "")
+
+    for segment in data_str.split(GS):
+        if len(segment) < 2:
+            continue
+
+        position = 0
+
+        while position <= len(segment) - 2:
+            identifiant = segment[position:position + 2]
+
+            if identifiant not in FIELD_MAP:
+                position += 1
+                continue
+
+            next_pos = position + 2
+
+            while next_pos < len(segment):
+                if next_pos + 1 < len(segment) and segment[next_pos:next_pos + 2] in FIELD_MAP:
+                    break
+                next_pos += 1
+
+            valeur = segment[position + 2:next_pos].strip()
+
+            if valeur:
+                champs[identifiant] = valeur
+
+            position = next_pos
+
+    return champs
+
+
+def parse_2ddoc(raw:str) -> mod.DocFields:
+    """
+    Point d'entrée principal.
+    Reçoit la chaîne brute du Data Matrix.
+    Retourne une instance DocFields (ou sous-classe) remplie.
     """
     pass
