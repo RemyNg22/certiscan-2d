@@ -63,6 +63,7 @@ FIELD_MAP = {
     "4V": "impot_revenu_net", # Impôt sur le revenu net
     "4W": "reste_a_payer", # Reste à payer
     "4X": "retenue_source", # Retenue à la source
+    "4Z": "champ_facultatif", # Champ facultatif (Avis V2 & V3)
     
     # Activités professionnelles & Bulletins de salaire
     "50": "siret_employeur", # SIRET de l'employeur
@@ -81,6 +82,11 @@ FIELD_MAP = {
     "5S": "fonction_declarant", # Fonction du déclarant
     "5T": "type_contrat", # Type de contrat de travail
     "5U": "duree_contrat", # Durée du contrat
+    "5V": "nom_employeur", # Nom ou raison sociale de l'employeur (Attestation Activité Pro)
+    "5W": "prenom_salarie", # Prénom du salarié (Attestation Activité Pro)
+    "5X": "nom_salarie", # Nom du salarié (Attestation Activité Pro)
+    "5Y": "date_debut_activite", # Date de début d'activité (Attestation Activité Pro)
+    "5Z": "statut_activite", # Statut d'activité (Attestation Activité Pro)
     
     # Identités, MRZ, Documents Étrangers (Série 6x)
     "60": "liste_prenoms", # Liste des prénoms
@@ -248,25 +254,24 @@ def parse_header(raw: str) -> dict:
     
 
     elif version == "04":
-        if len(raw) < 26:
-            raise ParseError(f"Header v04 trop court ({len(raw)} chars, min 26)")
+        if len(raw) < 28:
+            raise ParseError(f"Header v04 trop court ({len(raw)} chars, min 28)")
         
         return {
             "marqueur_id" : raw[0:2],
             "version_id" : version,
-            "ca_id" : raw[4:8],
-            "certif_id" : raw[8:12],
-            "date_emission" : raw[12:16],
-            "date_signature" : raw[16:20],
-            "code_identification_doc" : raw[20:22],
-            "identifiant_perimetre": raw[22:24],
-            "pays_emetteur" : raw[24:26],
-            "_data_offset" : 26
+            "ca_id" : raw[4:10],
+            "certif_id" : raw[10:14],
+            "date_emission" : raw[14:18],
+            "date_signature" : raw[18:22],
+            "code_identification_doc" : raw[22:24],
+            "identifiant_perimetre": raw[24:26],
+            "pays_emetteur" : raw[26:28],
+            "_data_offset" : 28
         }      
 
     else:
         raise ParseError(f"Version non supportée : '{version}' — versions gérées : 01, 02, 03, 04")
-
 
 
 def parse_champs(data_str: str) -> dict:

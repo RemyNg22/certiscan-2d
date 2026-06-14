@@ -181,6 +181,33 @@ class AvisDeclaratifImpotV2(DocFields):
     retenue_source: str  = None   # 4X - O
 
 
+@dataclass
+class AvisDeclaratifImpotV3(DocFields):
+    """Type 27 — Avis de Situation Déclarative à l'Impôt sur les Revenus V3"""
+    nombre_parts : str  = None   # 43 - O
+    reference_avis : str  = None   # 44 - O
+    annee_revenus : str  = None   # 45 - O
+    declarant1: str  = None   # 46 - O
+    date_declaration : str  = None   # 4B - O
+    impot_revenu_net : str  = None   # 4V - O
+    reste_a_payer : str  = None   # 4W - O
+    retenue_source: str  = None   # 4X - O
+    champ_facultatif: str  = None # 4Z - F
+
+
+@dataclass
+class AvisImpotRevenuV2(DocFields):
+    """Type 28 — Avis d'impôt sur les revenus V2"""
+    nombre_parts : str  = None   # 43 - O
+    reference_avis : str  = None   # 44 - O
+    annee_revenus : str  = None   # 45 - O
+    declarant1 : str  = None   # 46 - O
+    date_mise_recouvrement : str  = None   # 4A - O
+    impot_revenu_net : str  = None   # 4V - O
+    retenue_source: str  = None   # 4X - O
+    champ_facultatif: str  = None # 4Z - F
+
+
 # ===================
 # Activités professionnelles
 
@@ -244,6 +271,17 @@ class AutorisationTravailAES(DocFields):
     pays_naissance: str = None  # 6C - O
     numero_etranger: str = None  # 6Q - O
     numero_piece_identite: str = None  # 66 - O
+
+
+@dataclass
+class AttestationActiviteProfessionnelle(DocFields):
+    """Type 29 — Attestation d'Activité Professionnelle"""
+    siret_employeur: str = None  # 50 - O
+    nom_employeur: str = None  # 5V - O
+    prenom_salarie: str = None  # 5W - O
+    nom_salarie: str = None  # 5X - O
+    date_debut_activite: str = None  # 5Y - O
+    statut_activite: str = None  # 5Z - O
 
 
 # ================
@@ -429,7 +467,7 @@ class Diplome(DocFields):
     nom_patronymique: str = None  # B2 - O
     niveau_diplome: str = None  # BD - O
     type_diplome: str = None  # BG - O
-    domaine: str = None  # BH - O
+    domain: str = None  # BH - O
     mention: str = None  # BI - O
     specialite: str = None  # BJ - O
 
@@ -564,6 +602,9 @@ DOC_TYPE_MAP = {
     "23": CertificatPreuveVie,
     "24": AvisDeclaratifImpotV2,
     "25": AutorisationTravailAES,
+    "27": AvisDeclaratifImpotV3,
+    "28": AvisImpotRevenuV2,
+    "29": AttestationActiviteProfessionnelle,
     "A0": CertificatQualiteAir,
     "A1": CourrierPermisPoints,
     "A2": CarteMobiliteInclusion,
@@ -595,5 +636,3 @@ class VerificationResult:
     coherence_ok : Optional[bool] = None
     champs : Optional[DocFields] = None
     details : Optional[dict] = None
-
-    
