@@ -27,7 +27,7 @@ Le 2D-Doc est un **Data Matrix signé électroniquement** (ECDSA P-256/P-384/P-5
 
 La vérification est donc entièrement publique : aucune convention ni accréditation n'est requise pour vérifier un 2D-Doc existant.
 
-La présente application utilise d'ailleurs les spécifications techniques des documents utilisées dans le document suivant, émis par l'Etat Français : [https://pub.ants.gouv.fr/2D-DOC/DOCUMENTATION/04_Specifications_Techniques/FranceTitres_DCAT_2D-DOC_V1_04_Specifications_Techniques.pdf](Spécifications Techniques des Codes à Barres 2D-Doc)
+La présente application utilise d'ailleurs les spécifications techniques des documents utilisées dans le document suivant, émis par l'Etat Français : [Spécifications Techniques des Codes à Barres 2D-Doc](https://pub.ants.gouv.fr/2D-DOC/DOCUMENTATION/04_Specifications_Techniques/FranceTitres_DCAT_2D-DOC_V1_04_Specifications_Techniques.pdf)
 
 ---
 
