@@ -1,16 +1,16 @@
+import dataclasses
+import logging
 import certiscan2d.models as mod
 
 # Séparateurs définis dans la spec ANTS
 GS = "\x1d" # Group Separator - sépare les champs de données
 US = "\x1f" # Unit Separator - sépare les données de la signature
-RS = "\x1e" # Information Separator Two - tronque un mot en deux
+RS = "\x1e" # Information Separator Two - utilisé parfois pour tronquer ou marquer la fin
 
 class ParseError(Exception):
     pass
 
-# Correspondance complète identifiant ANTS -> nom d'attribut dans la dataclass
 FIELD_MAP = {
-
     # Données d'en-tête / Communs
     "06": "date_association", # Date de l'association entre le document et le code 2D-DOC
     "08": "date_expiration", # Date d'expiration du document
@@ -38,11 +38,16 @@ FIELD_MAP = {
     "38": "solde_compte", # Solde compte courant début de période
     
     # Justificatifs fiscaux & Impôts
+    "40": "numero_fiscal", # Numéro fiscal du foyer
+    "41": "revenu_fiscal_reference", # Revenu fiscal de référence
+    "42": "situation_foyer", # Situation du foyer
     "43": "nombre_parts", # Nombre de parts
     "44": "reference_avis", # Référence d'avis d'impôt
     "45": "annee_revenus", # Année des revenus
     "46": "declarant1", # Déclarant 1
     "47": "numero_fiscal_d1", # Numéro fiscal du déclarant 1
+    "48": "declarant2", # Déclarant 2
+    "49": "numero_fiscal_d2", # Numéro fiscal du déclarant 2
     "4A": "date_mise_recouvrement", # Date de mise en recouvrement
     "4B": "date_declaration", # Date de la déclaration
     "4C": "date_enregistrement", # Date d'enregistrement
@@ -51,19 +56,24 @@ FIELD_MAP = {
     "4F": "reference_enregistrement", # Référence d'enregistrement
     "4G": "nom_donataire", # Nom du donataire
     "4H": "nom_donateur", # Nom(s) du(es) donateur(s)
+    "4I": "montant_taxable", # Montant Taxable (en €)
     "4J": "montant_cession", # Montant de la cession (en €)
     "4K": "nom_cessionnaire", # Nom du cessionnaire
     "4L": "nom_cedant", # Nom du cédant
+    "4M": "taux_applicatif", # Taux applicatif (en %)
     "4N": "nom_prenom_declarant", # Nom et prénoms du déclarant (Attestation 2041-ASK)
-    "40": "adresse_declarant", # Adresse du déclarant
+    "4O": "adresse_declarant", # Adresse du déclarant
     "4P": "code_postal_declarant", # Code postal du déclarant
     "4Q": "commune_declarant", # Commune du déclarant
     "4R": "sip_gestionnaire", # SIP gestionnaire
     "4S": "millesime", # Millésime
+    "4T": "administration_cantonale_suisse", # Administration cantonale suisse
+    "4U": "denomination_sociale_employeur", # Dénomination sociale de l'employeur
     "4V": "impot_revenu_net", # Impôt sur le revenu net
     "4W": "reste_a_payer", # Reste à payer
     "4X": "retenue_source", # Retenue à la source
-    "4Z": "champ_facultatif", # Champ facultatif (Avis V2 & V3)
+    "4Y": "adresse_complete_domicile", # Adresse complète du domicile
+    "4Z": "prelevements_sociaux_nets", # Prélèvements sociaux nets / Champ facultatif
     
     # Activités professionnelles & Bulletins de salaire
     "50": "siret_employeur", # SIRET de l'employeur
@@ -88,7 +98,7 @@ FIELD_MAP = {
     "5Y": "date_debut_activite", # Date de début d'activité (Attestation Activité Pro)
     "5Z": "statut_activite", # Statut d'activité (Attestation Activité Pro)
     
-    # Identités, MRZ, Documents Étrangers (Série 6x)
+    # Identités, MRZ, Documents Étrangers
     "60": "liste_prenoms", # Liste des prénoms
     "61": "prenom_employe", # Prénom de l'employé
     "62": "nom_employe", # Nom de l'employé / Nom patronymique
@@ -112,7 +122,7 @@ FIELD_MAP = {
     "6W": "code_postal_domicile", # Code postal ou code cedex du domicile
     "6X": "commune_domicile", # Commune de l'adresse postale du domicile
     
-    # Santé / Décès (Série 7x)
+    # Santé / Décès
     "70": "date_heure_deces", # Date et heure du décès
     "71": "date_heure_constat", # Date et heure du constat de décès
     "72": "nom_defunt", # Nom du défunt
@@ -127,9 +137,9 @@ FIELD_MAP = {
     "7M": "identification_medecin", # Identification du médecin
     "7P": "identifiant_certificat", # Identifiant du certificat
     
-    # Permis, Chasse, Activités (Série 8x)
+    # Permis, Chasse, Activités
     "80": "nom", # Nom (ArretesPermisConduire, CourrierPermisPoints, etc.)
-    "81": "prenoms", # Prénoms
+    "81": "prenoms", # Prénom
     "82": "numero_carte", # Numéro de la carte
     "83": "organisme_tutelle", # Organisme de tutelle
     "85": "numero_permis", # Numéro de permis de chasser
@@ -142,13 +152,13 @@ FIELD_MAP = {
     "8D": "date_emission_cert", # Vie Date émission certificat
     "8J": "indicateur_dematerialisation", # Contact - Indicateur de dématérialisation
     
-    # Documents juridiques / Huissier (Série 9x)
+    # Documents juridiques / Huissier
     "90": "identite_huissier", # Identité de l'huissier de justice
     "92": "identite_destinataire", # Identité ou raison sociale du destinataire
     "94": "intitule_acte", # Intitulé de l'acte
     "96": "date_signature_acte", # Date de signature de l'acte
     
-    # Véhicules & Crit'Air (Série Ax)
+    # Véhicules & Crit'Air
     "A0": "pays_immatriculation", # Pays ayant émis l'immatriculation du véhicule
     "A1": "immatriculation", # Immatriculation du véhicule
     "A2": "marque", # Marque du véhicule
@@ -176,7 +186,7 @@ FIELD_MAP = {
     "AY": "code_postal", # Code postal ou code cedex du propriétaire
     "AZ": "commune", # Commune de l'adresse postale du propriétaire
     
-    # Diplômes & Académique (Série Bx)
+    # Diplômes & Académique
     "B0": "liste_prenoms", # Liste des prénoms
     "B1": "prenom", # Prénom
     "B2": "nom_patronymique", # Nom patronymique
@@ -189,10 +199,10 @@ FIELD_MAP = {
     "BG": "type_diplome", # Type de diplôme
     "BH": "domaine", # Domaine
     "BI": "mention", # Mention
-    "BJ": "specialite", # Spécialité
+    "BJ": "spécialité", # Spécialité
     "BK": "numero_attestation_cve", # Numéro de l'Attestation de versement de la CVE
     
-    # Cession de Véhicule (Série Cx)
+    # Cession de Véhicule
     "C1": "nom_vendeur", # Nom patronymique du vendeur
     "C2": "prenom_vendeur", # Prénom du vendeur
     "C3": "date_heure_cession", # Date et heure de la cession
@@ -204,6 +214,30 @@ FIELD_MAP = {
     "CA": "commune_acheteur", # Commune du domicile de l'acheteur
     "CB": "numero_enregistrement", # N° d'enregistrement
     "CC": "date_enregistrement_siv" # Date et heure d'enregistrement dans le SIV
+}
+
+# Base de connaissances globale des longueurs fixes de la spécification ANTS (min_size == max_size)
+LONGUEURS_FIXES = {
+    # En-tête & Communs
+    "06": 6, "07": 6, "08": 4, "09": 4, "0A": 9, "0B": 9,
+    # Adresses / Localisation
+    "1C": 8, "1G": 1, "1H": 1, "24": 5, "26": 2, "2B": 5, "2D": 2, "34": 2, "36": 4, "37": 4,
+    # Impôts & Fiscalité (Vérifié sur Spec V3.3.8)
+    "40": 13, "43": 1, "44": 13, "45": 4, "47": 13, "49": 13, "4A": 8, "4B": 8,
+    # Social / Paie
+    "50": 14, "51": 6, "52": 7, "53": 4, "54": 4, "55": 8, "56": 4, "57": 8, "5H": 5, "5J": 2, "5N": 21, "5T": 1,
+    # Identités & Étranger
+    "65": 2, "67": 2, "68": 1, "69": 8, "6B": 3, "6C": 2, "6I": 2, "6J": 1, "6K": 19, "6L": 8, "6N": 8, "6O": 8, "6R": 12, "6W": 5, "6Y": 2,
+    # Décès
+    "70": 12, "71": 12, "75": 8, "76": 1, "78": 5, "7A": 5, "7C": 1, "7D": 1, "7E": 1, "7F": 1, "7G": 1, "7H": 2, "7I": 1, "7J": 1, "7K": 13, "7L": 9, "7O": 1,
+    # Permis / Chasse
+    "85": 17, "86": 12, "96": 8,
+    # Véhicules & Infractions
+    "A0": 2, "A4": 17, "A5": 3, "A6": 2, "A7": 3, "A9": 3, "AA": 8, "AD": 4, "AE": 4, "AF": 1, "AG": 1, "AI": 8, "AJ": 13, "AK": 7, "AL": 11, "AN": 8, "AY": 5,
+    # Études / Académique
+    "B5": 2, "B6": 1, "B7": 8, "B9": 2, "BA": 1, "BD": 1, "BE": 3, "BF": 3, "BG": 2, "BK": 14,
+    # Cession SIV
+    "C0": 1, "C3": 12, "C4": 8, "C5": 1, "C9": 5, "CB": 10, "CC": 12
 }
 
 
@@ -221,15 +255,14 @@ def parse_header(raw: str) -> dict:
     if version in ("01","02"):
         if len(raw) < 22:
             raise ParseError(f"Header trop court ({len(raw)} caractères, minimum 22)")
-        
         return {
-            "marqueur_id" : raw[0:2], # toujours "DC"
-            "version_id" : version, # ex: "01"
-            "ca_id" : raw[4:8], # ex: "FR06"
-            "certif_id" : raw[8:12], # ex: "FPE6"
-            "date_emission" : raw[12:16], # ex: "FFFF"
-            "date_signature" : raw[16:20], # ex: "2471"
-            "code_identification_doc" : raw[20:22], # ex: "28"
+            "marqueur_id" : raw[0:2],
+            "version_id" : version,
+            "ca_id" : raw[4:8],
+            "certif_id" : raw[8:12],
+            "date_emission" : raw[12:16],
+            "date_signature" : raw[16:20],
+            "code_identification_doc" : raw[20:22],
             "identifiant_perimetre": None,
             "pays_emetteur" : None,
             "_data_offset": 22
@@ -238,7 +271,6 @@ def parse_header(raw: str) -> dict:
     elif version == "03":
         if len(raw) < 24:
             raise ParseError(f"Header v03 trop court ({len(raw)} chars, min 24)")
-        
         return {
             "marqueur_id" : raw[0:2],
             "version_id" : version,
@@ -251,73 +283,142 @@ def parse_header(raw: str) -> dict:
             "pays_emetteur" : None,
             "_data_offset" : 24
         }
-    
 
     elif version == "04":
-        if len(raw) < 28:
-            raise ParseError(f"Header v04 trop court ({len(raw)} chars, min 28)")
-        
+        if len(raw) < 26:
+            raise ParseError(f"Header v04 trop court ({len(raw)} chars, min 26)")
         return {
             "marqueur_id" : raw[0:2],
             "version_id" : version,
-            "ca_id" : raw[4:10],
-            "certif_id" : raw[10:14],
-            "date_emission" : raw[14:18],
-            "date_signature" : raw[18:22],
-            "code_identification_doc" : raw[22:24],
-            "identifiant_perimetre": raw[24:26],
-            "pays_emetteur" : raw[26:28],
-            "_data_offset" : 28
+            "ca_id" : raw[4:8],
+            "certif_id" : raw[8:12],
+            "date_emission" : raw[12:16],
+            "date_signature" : raw[16:20],
+            "code_identification_doc" : raw[20:22],
+            "identifiant_perimetre": raw[22:24],
+            "pays_emetteur" : raw[24:26],
+            "_data_offset" : 26
         }      
-
     else:
-        raise ParseError(f"Version non supportée : '{version}' — versions gérées : 01, 02, 03, 04")
+        raise ParseError(f"Version non supportée : '{version}'")
 
 
-def parse_champs(data_str: str) -> dict:
+def parse_champs(data_str: str, allowed_ids: set) -> dict:
     """
     Parse la partie données (après header, avant signature).
     Plusieurs identifiants peuvent être concaténés dans un même segment GS.
-    Le RS tronque un mot en deux parties à reconstruire.
+    - Si taille variable : capture jusqu'à tomber sur un ID ANTS présent 
+      dans allowed_ids (spécifique à la Dataclass).
     """
     champs = {}
+    data_part = data_str.replace(RS, "")
 
-    data_str = data_str.replace(RS, "")
-
-    for segment in data_str.split(GS):
+    # On traite chaque segment séparé par un GS (s'il y en a)
+    for segment in data_part.split(GS):
         if len(segment) < 2:
             continue
 
         position = 0
+        len_seg = len(segment)
 
-        while position <= len(segment) - 2:
+        while position <= len_seg - 2:
             identifiant = segment[position:position + 2]
 
-            if identifiant not in FIELD_MAP:
+            # On ne commence un champ que s'il est connu et utile pour le document
+            if identifiant not in FIELD_MAP or identifiant not in allowed_ids:
                 position += 1
                 continue
 
-            next_pos = position + 2
+            start_val = position + 2
+            
+            # CAS 1 : TAILLE FIXE STRICTE
+            if identifiant in LONGUEURS_FIXES:
+                taille = LONGUEURS_FIXES[identifiant]
+                next_pos = start_val + taille
+                if next_pos > len_seg:
+                    next_pos = len_seg
+                
+                valeur = segment[start_val:next_pos].strip()
+                if valeur:
+                    champs[identifiant] = valeur
+                position = next_pos
+            
+            # CAS 2 : TAILLE VARIABLE (Lookahead intelligent)
+            else:
+                next_pos = start_val
+                trouve_prochain = False
+                
+                while next_pos <= len_seg - 2:
+                    potentiel_id = segment[next_pos:next_pos + 2]
+                    
+                    if potentiel_id in allowed_ids:
+                        trouve_prochain = True
+                        break
+                    next_pos += 1
 
-            while next_pos < len(segment):
-                if next_pos + 1 < len(segment) and segment[next_pos:next_pos + 2] in FIELD_MAP:
-                    break
-                next_pos += 1
+                if trouve_prochain:
+                    valeur = segment[start_val:next_pos].strip()
+                    position = next_pos
+                else:
+                    valeur = segment[start_val:].strip()
+                    position = len_seg
 
-            valeur = segment[position + 2:next_pos].strip()
-
-            if valeur:
-                champs[identifiant] = valeur
-
-            position = next_pos
+                if valeur:
+                    champs[identifiant] = valeur
 
     return champs
 
 
-def parse_2ddoc(raw:str) -> mod.DocFields:
+def parse_2ddoc(raw: str) -> mod.DocFields:
     """
     Point d'entrée principal.
     Reçoit la chaîne brute du Data Matrix.
     Retourne une instance DocFields (ou sous-classe) remplie.
     """
-    pass
+    import logging
+    logger = logging.getLogger(__name__)
+
+    if "<US>" in raw:
+        raw = raw.replace("<GS>", GS).replace("<US>", US).replace("<RS>", RS)
+
+    if US in raw:
+        data_part, signature = raw.rsplit(US, 1)
+    else:
+        data_part = raw
+        signature = None
+
+    data_part = data_part.strip()
+
+    header = parse_header(data_part)
+    offset = header.pop("_data_offset")
+    code_doc = header["code_identification_doc"]
+
+    classe = mod.DOC_TYPE_MAP.get(code_doc)
+    if classe is None:
+        logger.warning(f"Type '{code_doc}' inconnu — Repli vers DocFields")
+        classe = mod.DocFields
+
+    # Liste des variables attendues par la Dataclass cible
+    champs_attendus_dataclass = {f.name for f in dataclasses.fields(classe)}
+
+    allowed_ids = {identifiant for identifiant, nom_attr in FIELD_MAP.items() if nom_attr in champs_attendus_dataclass}
+
+    champs_extraits = parse_champs(data_part[offset:], allowed_ids=allowed_ids)
+
+    kwargs = dict(header)
+    kwargs["signature_brute"] = signature
+    kwargs["champs_extra"] = {}
+
+    for identifiant, valeur in champs_extraits.items():
+        nom_attribut = FIELD_MAP.get(identifiant)
+        
+        if nom_attribut and nom_attribut in champs_attendus_dataclass:
+            kwargs[nom_attribut] = valeur
+        else:
+            cle_extra = nom_attribut if nom_attribut else f"id_{identifiant}"
+            kwargs["champs_extra"][cle_extra] = valeur
+
+    try:
+        return classe(**kwargs)
+    except TypeError as e:
+        raise ParseError(f"Erreur lors de l'instanciation de '{classe.__name__}' : {e}")

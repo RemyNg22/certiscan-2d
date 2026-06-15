@@ -1,6 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 class VerificationStatus(Enum):
@@ -13,7 +13,7 @@ class VerificationStatus(Enum):
 # Champs communs pour tous les documents
 @dataclass
 class DocFields:
-    marqueur_id : str   # marqueur d'identitfication
+    marqueur_id : str   # marqueur d'identification
     version_id : str    # version du 2D-Doc
     ca_id : str     # identifiant de l'autorité de certification
     certif_id : str     # identifiant du certificat
@@ -23,10 +23,11 @@ class DocFields:
     identifiant_perimetre : Optional[str] = None # code du périmètre à partir de la v03
     pays_emetteur : Optional[str] = None  # pays émetteur du doc
     signature_brute : Optional[str] = None # signature du 2d-doc à l'état brut
+    champs_extra: Dict[str, Any] = field(default_factory=dict) # Un dictionnaire pour stocker tous les champs non-mappés ou ignorés
 
 
 # ===============
-#JUSTIFICATIF DE DOMICILE
+# JUSTIFICATIF DE DOMICILE
 
 @dataclass
 class JustificatifDomicile(DocFields):
@@ -111,6 +112,7 @@ class AvisImpotRevenu(DocFields):
     declarant1 : str  = None   # 46 - O
     numero_fiscal_d1 : str  = None   # 47 - O
     date_mise_recouvrement : str  = None   # 4A - O
+    adresse_complete_domicile : str = None # 4Y - Adresse complète du domicile
 
 
 @dataclass
@@ -131,7 +133,7 @@ class AvisDeclaratifImpot(DocFields):
     nombre_parts : str  = None   # 43 - O
     reference_avis : str  = None   # 44 - O
     annee_revenus : str  = None   # 45 - O
-    declarant1 : str  = None   # 46 - O
+    declarant1: str  = None   # 46 - O
     date_declaration : str  = None   # 4B - O
 
 
@@ -206,6 +208,7 @@ class AvisImpotRevenuV2(DocFields):
     impot_revenu_net : str  = None   # 4V - O
     retenue_source: str  = None   # 4X - O
     champ_facultatif: str  = None # 4Z - F
+    adresse_complete_domicile : str = None # 4Y - Adresse complète du domicile
 
 
 # ===================
