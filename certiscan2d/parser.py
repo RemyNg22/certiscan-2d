@@ -199,7 +199,7 @@ FIELD_MAP = {
     "BG": "type_diplome", # Type de diplôme
     "BH": "domaine", # Domaine
     "BI": "mention", # Mention
-    "BJ": "spécialité", # Spécialité
+    "BJ": "specialite", # Spécialité
     "BK": "numero_attestation_cve", # Numéro de l'Attestation de versement de la CVE
     
     # Cession de Véhicule
@@ -305,66 +305,57 @@ def parse_header(raw: str) -> dict:
 
 def parse_champs(data_str: str, allowed_ids: set) -> dict:
     """
-    Parse la partie données (après header, avant signature).
-    Plusieurs identifiants peuvent être concaténés dans un même segment GS.
-    - Si taille variable : capture jusqu'à tomber sur un ID ANTS présent 
-      dans allowed_ids (spécifique à la Dataclass).
+    Parse la partie données de manière robuste en respectant les spécifications ANTS.
+    Un identifiant variable prend TOUTE la chaîne jusqu'au prochain séparateur GS.
     """
     champs = {}
+    
     data_part = data_str.replace(RS, "")
+    segments = data_part.split(GS)
 
-    # On traite chaque segment séparé par un GS (s'il y en a)
-    for segment in data_part.split(GS):
+    for segment in segments:
         if len(segment) < 2:
             continue
 
         position = 0
         len_seg = len(segment)
 
+        # On boucle à l'intérieur du segment
         while position <= len_seg - 2:
             identifiant = segment[position:position + 2]
 
-            # On ne commence un champ que s'il est connu et utile pour le document
-            if identifiant not in FIELD_MAP or identifiant not in allowed_ids:
+            # Si l'identifiant est inconnu ou non autorisé pour ce traitement, on avance de 1 pour tenter de se resynchroniser (sécurité).
+            if identifiant not in FIELD_MAP:
                 position += 1
                 continue
 
             start_val = position + 2
-            
-            # CAS 1 : TAILLE FIXE STRICTE
+
+            # CAS 1 : L'identifiant est de taille fixe
             if identifiant in LONGUEURS_FIXES:
                 taille = LONGUEURS_FIXES[identifiant]
                 next_pos = start_val + taille
+                
+                # Sécurité si le flux est mal formé
                 if next_pos > len_seg:
                     next_pos = len_seg
                 
                 valeur = segment[start_val:next_pos].strip()
                 if valeur:
                     champs[identifiant] = valeur
-                position = next_pos
-            
-            # CAS 2 : TAILLE VARIABLE (Lookahead intelligent)
-            else:
-                next_pos = start_val
-                trouve_prochain = False
                 
-                while next_pos <= len_seg - 2:
-                    potentiel_id = segment[next_pos:next_pos + 2]
-                    
-                    if potentiel_id in allowed_ids:
-                        trouve_prochain = True
-                        break
-                    next_pos += 1
+                # On avance directement après la valeur fixe.
+                # S'il reste des caractères dans le segment, le caractère suivant sera traité comme un nouvel identifiant.
+                position = next_pos
 
-                if trouve_prochain:
-                    valeur = segment[start_val:next_pos].strip()
-                    position = next_pos
-                else:
-                    valeur = segment[start_val:].strip()
-                    position = len_seg
-
+            # CAS 2 : L'identifiant est de taille variable
+            else:
+                valeur = segment[start_val:].strip()
                 if valeur:
                     champs[identifiant] = valeur
+                
+                # On force la sortie du segment puisqu'on a tout consommé
+                break
 
     return champs
 
@@ -373,7 +364,8 @@ def parse_2ddoc(raw: str) -> mod.DocFields:
     """
     Point d'entrée principal.
     Reçoit la chaîne brute du Data Matrix.
-    Retourne une instance DocFields (ou sous-classe) remplie.
+    Retourne une instance DocFields (ou sous-classe) remplie et 
+    directement compatible avec le module de validation cryptographique.
     """
     import logging
     logger = logging.getLogger(__name__)
@@ -389,22 +381,27 @@ def parse_2ddoc(raw: str) -> mod.DocFields:
 
     data_part = data_part.strip()
 
+    # Extraction et traitement de l'en-tête (Header)
     header = parse_header(data_part)
     offset = header.pop("_data_offset")
     code_doc = header["code_identification_doc"]
 
+    # Routage dynamique vers la classe de modèle ANTS adéquate
     classe = mod.DOC_TYPE_MAP.get(code_doc)
     if classe is None:
         logger.warning(f"Type '{code_doc}' inconnu — Repli vers DocFields")
         classe = mod.DocFields
 
-    # Liste des variables attendues par la Dataclass cible
+    # Liste des attributs attendus par l'initialiseur de la Dataclass cible
     champs_attendus_dataclass = {f.name for f in dataclasses.fields(classe)}
 
-    allowed_ids = {identifiant for identifiant, nom_attr in FIELD_MAP.items() if nom_attr in champs_attendus_dataclass}
+    # On autorise le parsing de TOUS les identifiants connus de la spécification générale
+    allowed_ids = set(FIELD_MAP.keys())
 
+    # Extraction séquentielle des champs du message (Lookahead sur tailles fixes/variables)
     champs_extraits = parse_champs(data_part[offset:], allowed_ids=allowed_ids)
 
+    # Préparation des arguments d'instanciation de l'objet
     kwargs = dict(header)
     kwargs["signature_brute"] = signature
     kwargs["champs_extra"] = {}
@@ -412,11 +409,12 @@ def parse_2ddoc(raw: str) -> mod.DocFields:
     for identifiant, valeur in champs_extraits.items():
         nom_attribut = FIELD_MAP.get(identifiant)
         
+        # Si l'attribut est explicitement défini dans le modèle typé
         if nom_attribut and nom_attribut in champs_attendus_dataclass:
             kwargs[nom_attribut] = valeur
-        else:
-            cle_extra = nom_attribut if nom_attribut else f"id_{identifiant}"
-            kwargs["champs_extra"][cle_extra] = valeur
+        
+        # On peuple obligatoirement 'champs_extra' avec la clé brute à 2 caractères.
+        kwargs["champs_extra"][identifiant] = valeur
 
     try:
         return classe(**kwargs)
