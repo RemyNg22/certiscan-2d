@@ -1,5 +1,6 @@
 import dataclasses
 import logging
+from typing import Dict, Any, Optional
 import certiscan2d.models as mod
 
 # Séparateurs définis dans la spec ANTS
@@ -10,6 +11,7 @@ RS = "\x1e" # Information Separator Two - utilisé parfois pour tronquer ou marq
 class ParseError(Exception):
     pass
 
+# Correspondance complète identifiant ANTS -> nom d'attribut dans la dataclass (Spécifications V3.3.8)
 FIELD_MAP = {
     # Données d'en-tête / Communs
     "06": "date_association", # Date de l'association entre le document et le code 2D-DOC
@@ -69,7 +71,7 @@ FIELD_MAP = {
     "4S": "millesime", # Millésime
     "4T": "administration_cantonale_suisse", # Administration cantonale suisse
     "4U": "denomination_sociale_employeur", # Dénomination sociale de l'employeur
-    "4V": "impot_revenu_net", # Impôt sur le revenu net
+    "4V": "impot_revenu_net", # Impôt sur le revue net
     "4W": "reste_a_payer", # Reste à payer
     "4X": "retenue_source", # Retenue à la source
     "4Y": "adresse_complete_domicile", # Adresse complète du domicile
@@ -345,7 +347,6 @@ def parse_champs(data_str: str, allowed_ids: set) -> dict:
                     champs[identifiant] = valeur
                 
                 # On avance directement après la valeur fixe.
-                # S'il reste des caractères dans le segment, le caractère suivant sera traité comme un nouvel identifiant.
                 position = next_pos
 
             # CAS 2 : L'identifiant est de taille variable
@@ -370,7 +371,7 @@ def parse_2ddoc(raw: str) -> mod.DocFields:
     import logging
     logger = logging.getLogger(__name__)
 
-    if "<US>" in raw:
+    if "<US>" in raw or "<GS>" in raw or "<RS>" in raw:
         raw = raw.replace("<GS>", GS).replace("<US>", US).replace("<RS>", RS)
 
     if US in raw:
@@ -420,3 +421,26 @@ def parse_2ddoc(raw: str) -> mod.DocFields:
         return classe(**kwargs)
     except TypeError as e:
         raise ParseError(f"Erreur lors de l'instanciation de '{classe.__name__}' : {e}")
+
+
+def parse_extractor_output(extractor_data: Dict[str, Any]) -> Optional[mod.DocFields]:
+    """
+    Prend en entrée la structure dictionnaire complète issue de extractor.py,
+    isole la chaîne de caractères brute 2D-Doc et appelle parse_2ddoc.
+    """
+    validation_info = extractor_data.get("document_validation", {})
+    unique_codes = validation_info.get("unique_codes", [])
+    
+    if not unique_codes or unique_codes[0] is None:
+        for page in extractor_data.get("pages", []):
+            if page.get("code_2d"):
+                unique_codes = [page["code_2d"]]
+                break
+                
+    if not unique_codes or unique_codes[0] is None:
+        return None
+        
+    try:
+        return parse_2ddoc(unique_codes[0])
+    except ParseError:
+        return None
