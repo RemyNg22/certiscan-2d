@@ -26,8 +26,8 @@ OCR_CONFIG = "--psm 6"
 # création des différentes exceptions possibles
 class ExtractionError(Exception): pass
 class InvalidImageError(ExtractionError): pass
-class DataMatrixNotFoundError(ExtractionError): pass
-class MultipleDataMatrixFoundError(ExtractionError): pass
+class DataMatrixNotFoundError(Exception): pass
+class MultipleDataMatrixFoundError(Exception): pass
 
 
 def normalisation_document(file_path: Path):
@@ -48,10 +48,10 @@ def normalisation_document(file_path: Path):
         for i, page in enumerate(doc):
             pix = page.get_pixmap(dpi=350)  # pdf vers pixels bitmap 350 DPI
             
-            #conversion vers array NumPy et reconstruction matrice image (longueurxlargeur x channels)
+            # conversion vers array NumPy et reconstruction matrice image (longueurxlargeur x channels)
             img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
 
-            #conversion couleur sécurisée pour OpenCV
+            # conversion couleur sécurisée pour OpenCV
             if pix.n == 4:
                 img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
             elif pix.n == 3:
@@ -117,76 +117,47 @@ def extract_text(gray: np.ndarray, binary: np.ndarray):
 
 def extract_2d_code(gray: np.ndarray, binary: np.ndarray, original: np.ndarray = None):
     """
-    Extraction des 2D-Doc détectés dans une image, principalement le document original.
-    Test fait sur plusieurs représentation de l'image, plusieurs fallback si besoin
+    Extraction séquentielle du code 2D-Doc (DataMatrix).
+    Passe à travers 4 variantes d'images (Gris, Seuil adaptatif, Original, Otsu)
+    en exploitant les capacités de rotation et d'inversion natives de zxingcpp.
     """
-    def try_decode(img):
+    def try_decode(img_src):
         try:
-            decoded = zxingcpp.read_barcodes(img)
-            return [r.text.strip() for r in decoded if r.text]
-        except Exception:
-            return []
-
-    def enhance(img):
-        # upscale
-        up = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-
-        # contraste fort
-        clahe = cv2.createCLAHE(3.0, (8, 8))
-        gray_img = cv2.cvtColor(up, cv2.COLOR_BGR2GRAY)
-        gray_img = clahe.apply(gray_img)
-
-        # sharpen (important sur jepg flou)
-        kernel = np.array([[0,-1,0],
-                           [-1,5,-1],
-                           [0,-1,0]])
-        sharp = cv2.filter2D(gray_img, -1, kernel)
-        return sharp
-
-    def binarize(img):
-        return cv2.adaptiveThreshold(
-            img,
-            255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY,
-            31,
-            2)
-
-    candidates = []
-
-    # base
-    candidates.append(binary)
-    candidates.append(gray)
-
-    # enhanced
-    candidates.append(enhance(original if original is not None else cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)))
-
-    # binarisation
-    candidates.append(binarize(gray))
-
-    # fallback rotation
-    def rotations(img):
-        return [
-            img,
-            cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE),
-            cv2.rotate(img, cv2.ROTATE_180),
-            cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)]
-
-    all_codes = []
-
-    for c in candidates:
-        for r in rotations(c):
-            codes = try_decode(r)
-            if codes:
-                all_codes.extend(codes)
-
-    # dedup
-    unique = list(set(all_codes))
-
-    if not unique:
+            results = zxingcpp.read_barcodes(
+                img_src, 
+                formats=zxingcpp.BarcodeFormat.DataMatrix,
+                try_rotate=True,
+                try_invert=True
+            )
+            if results:
+                return results[0].text
+        except Exception as e:
+            logger.debug(f"Échec de décodage sur cette variante d'image : {e}")
         return None
 
-    return unique[0]
+    # Étape 1 : Test sur l'image en niveaux de gris
+    code = try_decode(gray)
+    if code: return code
+
+    # Étape 2 : Test sur l'image binarisée
+    code = try_decode(binary)
+    if code: return code
+
+    # Étape 3 : Test sur l'image d'origine si fournie
+    if original is not None:
+        code = try_decode(original)
+        if code: return code
+
+    # Étape 4 : Fallback ultime avec une binarisation classique d'Otsu
+    try:
+        _, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        code = try_decode(otsu)
+        if code: return code
+    except Exception:
+        pass
+
+    raise DataMatrixNotFoundError("Aucun code 2D-Doc (DataMatrix) n'a pu être extrait de l'image.")
+
 
 
 def detect_input_type(img):

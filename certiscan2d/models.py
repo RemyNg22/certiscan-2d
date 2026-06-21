@@ -20,6 +20,7 @@ class DocFields:
     date_emission : str     # date d'émission
     date_signature : str    # date de création de la signature
     code_identification_doc : str   # code d'identification du document
+    payload_brut: Optional[str] = None # chaîne binaire nécessaire à la crypto
     identifiant_perimetre : Optional[str] = None # code du périmètre à partir de la v03
     pays_emetteur : Optional[str] = None  # pays émetteur du doc
     signature_brute : Optional[str] = None # signature du 2d-doc à l'état brut

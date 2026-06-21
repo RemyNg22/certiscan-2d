@@ -254,19 +254,19 @@ def parse_header(raw: str) -> dict:
     
     version = raw[2:4]
     
-    if version in ("01","02"):
+    if version in ("01", "02"):
         if len(raw) < 22:
             raise ParseError(f"Header trop court ({len(raw)} caractères, minimum 22)")
         return {
-            "marqueur_id" : raw[0:2],
-            "version_id" : version,
-            "ca_id" : raw[4:8],
-            "certif_id" : raw[8:12],
-            "date_emission" : raw[12:16],
-            "date_signature" : raw[16:20],
-            "code_identification_doc" : raw[20:22],
+            "marqueur_id": raw[0:2],
+            "version_id": version,
+            "ca_id": raw[4:8],
+            "certif_id": raw[8:12],
+            "date_emission": raw[12:16],
+            "date_signature": raw[16:20],
+            "code_identification_doc": raw[20:22],
             "identifiant_perimetre": None,
-            "pays_emetteur" : None,
+            "pays_emetteur": None,
             "_data_offset": 22
         }
     
@@ -274,32 +274,32 @@ def parse_header(raw: str) -> dict:
         if len(raw) < 24:
             raise ParseError(f"Header v03 trop court ({len(raw)} chars, min 24)")
         return {
-            "marqueur_id" : raw[0:2],
-            "version_id" : version,
-            "ca_id" : raw[4:8],
-            "certif_id" : raw[8:12],
-            "date_emission" : raw[12:16],
-            "date_signature" : raw[16:20],
-            "code_identification_doc" : raw[20:22],
+            "marqueur_id": raw[0:2],
+            "version_id": version,
+            "ca_id": raw[4:8],
+            "certif_id": raw[8:12],
+            "date_emission": raw[12:16],
+            "date_signature": raw[16:20],
+            "code_identification_doc": raw[20:22],
             "identifiant_perimetre": raw[22:24],
-            "pays_emetteur" : None,
-            "_data_offset" : 24
+            "pays_emetteur": None,
+            "_data_offset": 24
         }
 
     elif version == "04":
         if len(raw) < 26:
             raise ParseError(f"Header v04 trop court ({len(raw)} chars, min 26)")
         return {
-            "marqueur_id" : raw[0:2],
-            "version_id" : version,
-            "ca_id" : raw[4:8],
-            "certif_id" : raw[8:12],
-            "date_emission" : raw[12:16],
-            "date_signature" : raw[16:20],
-            "code_identification_doc" : raw[20:22],
+            "marqueur_id": raw[0:2],
+            "version_id": version,
+            "ca_id": raw[4:8],
+            "certif_id": raw[8:12],
+            "date_emission": raw[12:16],
+            "date_signature": raw[16:20],
+            "code_identification_doc": raw[20:22],
             "identifiant_perimetre": raw[22:24],
-            "pays_emetteur" : raw[24:26],
-            "_data_offset" : 26
+            "pays_emetteur": raw[24:26],
+            "_data_offset": 26
         }      
     else:
         raise ParseError(f"Version non supportée : '{version}'")
@@ -363,27 +363,47 @@ def parse_champs(data_str: str, allowed_ids: set) -> dict:
 
 def parse_2ddoc(raw: str) -> mod.DocFields:
     """
-    Point d'entrée principal.
-    Reçoit la chaîne brute du Data Matrix.
+    Point d'entrée principal. Reçoit la chaîne brute du Data Matrix.
     Retourne une instance DocFields (ou sous-classe) remplie et 
     directement compatible avec le module de validation cryptographique.
     """
-    import logging
     logger = logging.getLogger(__name__)
 
     if "<US>" in raw or "<GS>" in raw or "<RS>" in raw:
         raw = raw.replace("<GS>", GS).replace("<US>", US).replace("<RS>", RS)
 
-    if US in raw:
-        data_part, signature = raw.rsplit(US, 1)
-    else:
-        data_part = raw
-        signature = None
+    version = raw[2:4] if len(raw) > 4 else "01"
+    signature = None
+    payload_brut = raw
 
-    data_part = data_part.strip()
+    # Extraction et isolation de la signature selon le format et la version du document
+    if version in ("01", "02", "03"):
+        if US in raw:
+            payload_brut, signature = raw.rsplit(US, 1)
+            if signature and GS in signature:
+                signature, _annexe = signature.split(GS, 1)
+        else:
+            payload_brut = raw
+            signature = None
+
+    elif version == "04":
+        if "\xff" in raw:
+            parts = raw.split("\xff", 1)
+            payload_brut = parts[0]
+            remainder = parts[1]
+            if len(remainder) > 0:
+                sig_len = ord(remainder[0])
+                signature = remainder[1:1 + sig_len]
+        elif US in raw:
+            payload_brut, signature = raw.rsplit(US, 1)
+            if signature and GS in signature:
+                signature, _annexe = signature.split(GS, 1)
+        else:
+            payload_brut = raw
+            signature = None
 
     # Extraction et traitement de l'en-tête (Header)
-    header = parse_header(data_part)
+    header = parse_header(payload_brut)
     offset = header.pop("_data_offset")
     code_doc = header["code_identification_doc"]
 
@@ -400,11 +420,12 @@ def parse_2ddoc(raw: str) -> mod.DocFields:
     allowed_ids = set(FIELD_MAP.keys())
 
     # Extraction séquentielle des champs du message (Lookahead sur tailles fixes/variables)
-    champs_extraits = parse_champs(data_part[offset:], allowed_ids=allowed_ids)
+    champs_extraits = parse_champs(payload_brut[offset:], allowed_ids=allowed_ids)
 
     # Préparation des arguments d'instanciation de l'objet
     kwargs = dict(header)
     kwargs["signature_brute"] = signature
+    kwargs["payload_brut"] = payload_brut
     kwargs["champs_extra"] = {}
 
     for identifiant, valeur in champs_extraits.items():
