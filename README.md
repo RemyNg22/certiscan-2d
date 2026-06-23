@@ -23,7 +23,7 @@ L'application vérifie l'intégrité et la cohérence des documents officiels s�
 
 ## Fonctionnement du 2D-Doc
 
-Le 2D-Doc est un **Data Matrix signé électroniquement** (ECDSA P-256/P-384/P-521). Il encode les données clés du document (nom, montant, émetteur, dates) ainsi qu'une signature cryptographique. La clé privée appartient à l'organisme émetteur et les clés publiques sont distribuées librement via la **TSL (Trusted Service List)** publiée par l'ANTS.
+Le 2D-Doc est un **Data Matrix signé électroniquement** (ECDSA). Il encode les données clés du document (nom, montant, émetteur, dates) ainsi qu'une signature cryptographique. La clé privée appartient à l'organisme émetteur et les clés publiques sont distribuées librement via la **TSL (Trusted Service List)** publiée par l'ANTS.
 
 La vérification est donc entièrement publique : aucune convention ni accréditation n'est requise pour vérifier un 2D-Doc existant.
 
@@ -33,7 +33,7 @@ La présente application utilise d'ailleurs les spécifications techniques des d
 
 ## Fonctionnalités
 
-### 1. Vérification complète (Web & CLI)
+### Vérification complète (Web & CLI)
 
 Il y a trois niveau de contrôle :
 
@@ -55,9 +55,6 @@ Résultats possibles :
 | **SUSPICIOUS** | Signature valide mais incohérences dans le texte visible |
 | **INVALID** | Échec structurel (format non reconnu, Data Matrix illisible) |
 
-### 2. Générateur sandbox (Web)
-
-Création de documents factices avec signature ECDSA réelle mais signés avec une clé de démonstration interne au projet, non référencée dans la TSL ANTS. Permet de tester le flux complet et d'illustrer la vulnérabilité d'un document sans 2D-Doc ou avec un code forgé.
 
 ---
 
@@ -92,15 +89,20 @@ certiscan-2d/
 │   ├── parser.py                # Bytes → structure 2D-Doc (header + champs + signature)
 │   ├── crypto.py                # Vérification ECDSA via TSL ANTS (fr_2ddoc_parser)
 │   ├── verifier.py              # Cohérence : champs 2D-Doc vs texte du PDF
-│   ├── generator.py             # Génération document + Data Matrix sandbox (clé interne)
+│   ├── orchestrateur.py         # Chaîne extractor -> parser -> crypto -> verifier
 │   └── models.py                # VerificationResult, DocFields
+|
+|
+├── cache_2ddoc/
+│   ├── tsl_signed.xml           # TSL émis par l'ANTS pour le téléchargement des certificats
+│   └── leaf_certs               # Les différents certificats pour la vérification cryptographique
 │
 ├── web_app/                     # Interface Flask
 │   ├── static/                  # CSS / JS
 │   ├── templates/               # HTML (index, résultat, générateur)
 │   └── app.py                   # Routes Flask
 │
-├── setup.py                     # pip install -e . + commande CLI certiscan2d
+├── certificate.py               # génération du PDF de certificat à la volée (pdf de certification doc)
 ├── requirements.txt
 └── README.md
 ```
@@ -153,26 +155,12 @@ certiscan2d -name mon_avis_imposition.pdf
 
 ---
 
-## Stack technique
-
-| Composant | Bibliothèque | Rôle |
-|:----------|:-------------|:-----|
-| Extraction Data Matrix | `pylibdmtx` + `opencv-python` + `pdf2image` | Localisation et décodage du code dans le PDF |
-| Parsing 2D-Doc | `fr_2ddoc_parser` (beta.gouv) | Parsing format ANTS + vérification ECDSA via TSL embarquée |
-| Parsing PDF | `pdfplumber` + `pytesseract` | Extraction du texte visible pour contrôle de cohérence |
-| Cryptographie sandbox | `cryptography` | Génération de clés ECDSA P-256 pour le générateur de test |
-| CLI | `click` | Interface ligne de commande |
-| Web | `Flask` + `gunicorn` | Interface utilisateur et API |
-
----
-
 ## Périmètre et limites du PoC
 
 Ce projet utilise une **vraie vérification cryptographique** des 2D-Doc via la TSL publique de l'ANTS.
 
 Limites actuelles :
 - La vérification est celle de l'intégrité du code lui-même, pas de l'identité du porteur
-- Le générateur sandbox produit des codes signés avec une clé interne au projet — ils échoueront à la vérification ECDSA, ce qui est le comportement attendu pour illustrer la détection de fraude
 - La qualité de la vérification varie selon la résolution et la mise en page du PDF source
 
 ---

@@ -114,6 +114,7 @@ class AvisImpotRevenu(DocFields):
     numero_fiscal_d1 : str  = None   # 47 - O
     date_mise_recouvrement : str  = None   # 4A - O
     adresse_complete_domicile : str = None # 4Y - Adresse complète du domicile
+    revenu_fiscal_reference : str = None # 41 - Revenu fiscal de référence
 
 
 @dataclass
@@ -136,6 +137,7 @@ class AvisDeclaratifImpot(DocFields):
     annee_revenus : str  = None   # 45 - O
     declarant1: str  = None   # 46 - O
     date_declaration : str  = None   # 4B - O
+    revenu_fiscal_reference : str = None # 41 - Revenu fiscal de référence - F
 
 
 @dataclass
@@ -182,6 +184,7 @@ class AvisDeclaratifImpotV2(DocFields):
     impot_revenu_net : str  = None   # 4V - O
     reste_a_payer : str  = None   # 4W - O
     retenue_source: str  = None   # 4X - O
+    revenu_fiscal_reference : str = None # 41 - Revenu fiscal de référence - F
 
 
 @dataclass
@@ -196,6 +199,7 @@ class AvisDeclaratifImpotV3(DocFields):
     reste_a_payer : str  = None   # 4W - O
     retenue_source: str  = None   # 4X - O
     champ_facultatif: str  = None # 4Z - F
+    revenu_fiscal_reference : str = None # 41 - Revenu fiscal de référence - F
 
 
 @dataclass
@@ -210,6 +214,7 @@ class AvisImpotRevenuV2(DocFields):
     retenue_source: str  = None   # 4X - O
     champ_facultatif: str  = None # 4Z - F
     adresse_complete_domicile : str = None # 4Y - Adresse complète du domicile
+    revenu_fiscal_reference : str = None # 41 - Revenu fiscal de référence - F
 
 
 # ===================
