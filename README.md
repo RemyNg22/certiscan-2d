@@ -102,7 +102,13 @@ certiscan-2d/
 │   ├── templates/               # HTML (index, résultat, générateur)
 │   └── app.py                   # Routes Flask
 │
+|
+├── doc_ants/
+│   └── FranceTitres_DCAT_2D-DOC_V1_04_Specifications_Techniques.pdf # Doc technique de l'ANTS sur lequel se base le projet
+│
 ├── certificate.py               # génération du PDF de certificat à la volée (pdf de certification doc)
+│
+├── pyproject.toml               # Fichier de configuration d'installation pour CLI Linux
 ├── requirements.txt
 └── README.md
 ```

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "certiscan2d"
+version = "1.0.0"
+description = "Outil local d'audit et de vérification de documents 2D-Doc"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    # pip install installera automatiquement ces paquets s'ils manquent
+    "Flask>=3.0.0",
+]
+
+[project.scripts]
+certiscan = "certiscan2d.cli:main"
