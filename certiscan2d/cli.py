@@ -55,7 +55,7 @@ def afficher_rapport_console(rapport) -> None:
     maintenant = datetime.now(ZoneInfo("Europe/Paris")).strftime("%d/%m/%Y à %H:%M:%S")
 
     print("=" * 65)
-    print(f" 🔍 RAPPORT D'ANALYSE LOCAL : {rapport.nom_fichier_origine}")
+    print(f"RAPPORT D'ANALYSE LOCAL : {rapport.nom_fichier_origine}")
     print("=" * 65)
     print(f"Exécuté le : {maintenant}")
     print(f"Type de document : {rapport.type_document_libelle}")
@@ -78,10 +78,25 @@ def afficher_rapport_console(rapport) -> None:
         
     print("-" * 65)
     if rapport.champs_verifies:
-        print("DONNÉES SÉCURISÉES EXTRAITES (CONCORDANCE TEXTE OK) :")
+        print("COMPARAISON ET CONCORDANCE DES DONNÉES CROISÉES :")
         for champ, donnees in rapport.champs_verifies.items():
-            valeur = donnees.get("valeur", "N/A")
-            print(f"  • {champ:<25} : {valeur}")
+            # Alignement avec la structure réelle de verifier.py ("attendu", "trouve", "statut")
+            valeur_attendue = donnees.get("attendu", "N/A")
+            valeur_trouvee = donnees.get("trouve", "N/A")
+            statut_champ = donnees.get("statut", "ignore")
+
+            # Formatage visuel de la cohérence du champ
+            if statut_champ == "ok":
+                symbole_champ = f"{c_vert}[OK]{c_reset}"
+                details_concordance = f"-> {valeur_attendue}"
+            elif statut_champ == "echec":
+                symbole_champ = f"{c_rouge}[ÉCART]{c_reset}"
+                details_concordance = f"(Attendu: '{valeur_attendue}' | Trouvé OCR: '{valeur_trouvee}')"
+            else:
+                symbole_champ = f"{c_jaune}[-]    {c_reset}"
+                details_concordance = f"-> {valeur_attendue} (Non vérifiable par OCR)"
+
+            print(f"  • {symbole_champ} {champ:<20} : {details_concordance}")
     else:
         print("Aucune donnée scellée n'a pu être extraite (analyse interrompue).")
     print("=" * 65)

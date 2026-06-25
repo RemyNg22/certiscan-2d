@@ -9,9 +9,18 @@ description = "Outil local d'audit et de vérification de documents 2D-Doc"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    # pip install installera automatiquement ces paquets s'ils manquent
     "Flask>=3.0.0",
+    "pymupdf>=1.24.0",
+    "opencv-python-headless>=4.9.0",
+    "zxing-cpp>=2.2.0",
+    "pytesseract>=0.3.10",
+    "numpy>=1.26.0",
+    "cryptography>=42.0.0",
+    "Pillow>=10.0.0",
 ]
 
 [project.scripts]
 certiscan = "certiscan2d.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["certiscan2d*"]
