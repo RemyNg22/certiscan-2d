@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-certiscan = "certiscan2d.cli:main"
+certiscan2d = "certiscan2d.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["certiscan2d*"]

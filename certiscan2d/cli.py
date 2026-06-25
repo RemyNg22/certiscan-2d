@@ -48,10 +48,10 @@ def afficher_rapport_console(rapport) -> None:
     couleur = c_jaune
     if rapport.statut == "VALID":
         couleur = c_vert
-    elif rapport.statut in ["INVALID", "CRYPTO_FAIL"]:
+    elif rapport.statut in ["INVALID", "CRYPTO_FAIL", "SUSPICIOUS"]:
         couleur = c_rouge
 
-    # Formatage de la date en heure locale française pour le confort de l'utilisateur local
+    # Formatage de la date en heure locale française
     maintenant = datetime.now(ZoneInfo("Europe/Paris")).strftime("%d/%m/%Y à %H:%M:%S")
 
     print("=" * 65)
@@ -80,23 +80,24 @@ def afficher_rapport_console(rapport) -> None:
     if rapport.champs_verifies:
         print("COMPARAISON ET CONCORDANCE DES DONNÉES CROISÉES :")
         for champ, donnees in rapport.champs_verifies.items():
-            # Alignement avec la structure réelle de verifier.py ("attendu", "trouve", "statut")
             valeur_attendue = donnees.get("attendu", "N/A")
-            valeur_trouvee = donnees.get("trouve", "N/A")
-            statut_champ = donnees.get("statut", "ignore")
+            statut_champ = donnees.get("statut", "")
 
-            # Formatage visuel de la cohérence du champ
-            if statut_champ == "ok":
+            # Alignement direct sur les statuts de verifier.py : MATCH, MISSING, CONTRADICTION
+            if statut_champ == "MATCH":
                 symbole_champ = f"{c_vert}[OK]{c_reset}"
-                details_concordance = f"-> {valeur_attendue}"
-            elif statut_champ == "echec":
-                symbole_champ = f"{c_rouge}[ÉCART]{c_reset}"
-                details_concordance = f"(Attendu: '{valeur_attendue}' | Trouvé OCR: '{valeur_trouvee}')"
+                details_concordance = f"-> {valeur_attendue} (Confirmé à la surface)"
+            elif statut_champ == "CONTRADICTION":
+                symbole_champ = f"{c_rouge}[FRAUDE]{c_reset}"
+                details_concordance = f"-> {valeur_attendue} (Une valeur différente a été lue sur le document !)"
+            elif statut_champ == "MISSING":
+                symbole_champ = f"{c_jaune}[PARTIEL]{c_reset}"
+                details_concordance = f"-> {valeur_attendue} (Absent du texte imprimé ou scan illisible)"
             else:
-                symbole_champ = f"{c_jaune}[-]    {c_reset}"
-                details_concordance = f"-> {valeur_attendue} (Non vérifiable par OCR)"
+                symbole_champ = f"{c_jaune}[-]{c_reset}"
+                details_concordance = f"-> {valeur_attendue}"
 
-            print(f"  • {symbole_champ} {champ:<20} : {details_concordance}")
+            print(f"  • {symbole_champ:<19} {champ:<23} : {details_concordance}")
     else:
         print("Aucune donnée scellée n'a pu être extraite (analyse interrompue).")
     print("=" * 65)
@@ -107,10 +108,9 @@ def main() -> None:
     parser = configurer_arguments()
     args = parser.parse_args()
 
-    # Résolution automatique du chemin (gère le relatif comme './facture.pdf' et l'absolu)
+    # Résolution automatique du chemin d'accès
     target_path = Path(args.fichier).expanduser().resolve()
     
-    # Vérification de sécurité locale élémentaire
     if not target_path.is_file():
         print(f"Erreur : Le fichier spécifié est introuvable ou invalide : {target_path}", file=sys.stderr)
         sys.exit(1)
@@ -133,7 +133,7 @@ def main() -> None:
     # Codes de retour système standardisés
     if rapport.statut == "VALID":
         sys.exit(0)
-    elif rapport.statut in ["INVALID", "CRYPTO_FAIL"]:
+    elif rapport.statut in ["INVALID", "CRYPTO_FAIL", "SUSPICIOUS"]:
         sys.exit(1)
     else:
         sys.exit(3)

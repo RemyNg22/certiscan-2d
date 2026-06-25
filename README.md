@@ -129,7 +129,7 @@ pip install -e .
 Dépendances système requises (Ubuntu/Debian) :
 
 ```bash
-sudo apt install libdmtx0b tesseract-ocr tesseract-ocr-fra poppler-utils
+sudo apt install tesseract-ocr tesseract-ocr-fra
 ```
 
 ---
@@ -156,7 +156,8 @@ URL de production : [https://certiscan-2d.com](https://certiscan-2d.com)
 Analyser un document depuis n'importe quel emplacement :
 
 ```bash
-certiscan2d -name mon_avis_imposition.pdf
+certiscan2d mon_avis_imposition.pdf
+certiscan2d --help
 ```
 
 ---
