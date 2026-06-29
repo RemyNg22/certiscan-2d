@@ -2,3 +2,8 @@ pymupdf
 opencv-python
 pytesseract
 zxing-cpp
+flask
+filetype
+pillow-heif
+pillow
+reportlab

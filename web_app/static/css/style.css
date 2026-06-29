@@ -1,0 +1,370 @@
+/*CertiScan 2D — Charte graphique*/
+
+:root {
+    /* Nuances de gris et noir */
+    --bg-main: #0a0a0c;
+    --bg-card: #121316;
+    --bg-nav: #000000;
+    --border-color: #22252c;
+    
+    /* Typographies claires et institutionnelles */
+    --text-main: #e3e5eb;
+    --text-muted: #7c8494;
+    
+    /* Signaux de statut et codes du logo */
+    --primary: #7a0c10;
+    --primary-hover: #821418;
+    --success: #27ae60;
+    --warning: #d35400;
+    --danger: #c0392b;
+    
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* ── STRUCTURE ET MISE EN PAGE ── */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans);
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* ── BARRE DE NAVIGATION MINIMALISTE ── */
+.navbar {
+    background-color: var(--bg-nav);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-logo-img {
+    height: 54px;
+    width: auto;
+    display: block;
+}
+
+.nav-links {
+    display: flex;
+    gap: 32px;
+}
+
+.nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.nav-links a:hover {
+    color: var(--text-main);
+}
+
+/* ── EN-TÊTE DE PAGE SANS ARTIFICE ── */
+.hero-section {
+    padding: 50px 0 30px 0;
+    text-align: left;
+}
+
+.hero-text h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    margin-bottom: 12px;
+    line-height: 1.25;
+}
+
+.hero-subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-width: 800px;
+    line-height: 1.5;
+    margin-bottom: 30px;
+}
+
+/* ── PANNEAUX ET CONTENEURS (CARDS) ── */
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 32px;
+    margin-bottom: 24px;
+}
+
+.main-card {
+    max-width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* ── INTERFACE DE DÉPÔT (DROP ZONE) ── */
+.drop-zone {
+    border: 1px dashed #333842;
+    border-radius: 4px;
+    padding: 60px 20px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #0d0e11;
+    transition: border-color 0.15s ease;
+}
+
+.drop-zone:hover, .drop-zone.highlight {
+    border-color: var(--primary);
+}
+
+.drop-zone-text {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+
+.drop-zone-formats {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.file-input { display: none; }
+
+/* Aperçu du fichier */
+.file-preview {
+    background: #000000;
+    border: 1px solid var(--border-color);
+    padding: 14px 20px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-name { font-family: var(--font-mono); font-size: 0.9rem; }
+.btn-remove {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* ── BOUTONS ADMINISTRATIFS ── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 28px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    text-decoration: none;
+}
+
+.btn-primary { background-color: var(--primary); color: #ffffff; }
+.btn-primary:hover { background-color: var(--primary-hover); }
+.btn-secondary { background-color: #1e2026; color: var(--text-main); border: 1px solid var(--border-color); }
+.btn-secondary:hover { background-color: #282b33; }
+.btn-block { width: 100%; }
+
+/* ── ÉCRAN DE CHARGEMENT TECHNIQUE ── */
+.spinner-box {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 40px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-logo-satin {
+    width: 70px;
+    height: auto;
+    position: absolute;
+    z-index: 1;
+    opacity: 0.9;
+}
+
+.spinner {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 2px solid rgba(255, 255, 255, 0.05);
+    border-top: 2px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 2;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+#loading-title { font-size: 1.2rem; font-weight: 600; margin-top: 16px; text-align: center; }
+.loading-phrase { color: var(--text-muted); font-size: 0.9rem; margin-top: 8px; text-align: center; }
+
+/* ── ZONE DE BANDEAU DE VERDICT (GRAND PUBLIC) ── */
+.verdict-banner {
+    padding: 24px;
+    border-radius: 4px;
+    margin-bottom: 24px;
+    border-left: 5px solid transparent;
+}
+
+.banner-success { background-color: rgba(39, 174, 96, 0.08); border-left-color: var(--success); color: #81e6a4; }
+.banner-warning { background-color: rgba(211, 84, 0, 0.08); border-left-color: var(--warning); color: #ffaa66; }
+.banner-danger { background-color: rgba(192, 57, 43, 0.08); border-left-color: var(--danger); color: #ff8883; }
+
+.verdict-title { font-size: 1.35rem; font-weight: 700; margin-bottom: 6px; }
+.verdict-subtitle { font-size: 0.95rem; opacity: 0.9; line-height: 1.4; }
+
+.meta-summary {
+    background-color: #0b0c0e;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.result-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+/* ── SECTION TECHNIQUE D'AUDIT (VISIBLE DIRECTEMENT) ── */
+.technical-audit-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: 28px;
+    margin-top: 16px;
+}
+
+.technical-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+}
+
+.details-content {
+    padding-top: 8px;
+}
+
+.details-content h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 24px 0 12px 0;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Registre de pipeline */
+.pipeline-list { display: flex; flex-direction: column; gap: 8px; }
+.pipeline-step {
+    background: #0d0e11;
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    display: flex;
+    gap: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.step-status-text { font-family: var(--font-mono); font-weight: 700; }
+.step-details { flex-grow: 1; color: #b5bac9; }
+.step-time { font-family: var(--font-mono); color: var(--text-muted); }
+
+/* Tableaux de données techniques */
+.table-responsive { width: 100%; overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+.data-table th, .data-table td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); }
+.data-table th { background-color: #0d0e11; color: var(--text-muted); font-weight: 600; }
+.font-mono { font-family: var(--font-mono); }
+
+/* Rappels de couleurs de texte */
+.txt-success { color: var(--success); }
+.txt-danger { color: #ff6b6b; }
+.txt-muted { color: var(--text-muted); }
+
+/* ── SECTIONS EXPLICATIVES INFÉRIEURES ── */
+.info-section {
+    padding: 40px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.section-title { font-size: 1.35rem; font-weight: 700; margin-bottom: 24px; color: #ffffff; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+.info-block h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; color: #ffffff; }
+.info-block p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
+
+.security-section {
+    padding: 40px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.section-title-small { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; color: #ffffff; }
+.security-section p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+
+/* Alertes d'erreurs d'upload */
+.alert { padding: 14px 16px; border-radius: 4px; margin-bottom: 24px; font-size: 0.9rem; }
+.alert-danger { background-color: rgba(192, 57, 43, 0.1); border: 1px solid var(--primary); color: #ff6b6b; }
+
+/* ── PIED DE PAGE ── */
+.footer {
+    background-color: var(--bg-nav);
+    border-top: 1px solid var(--border-color);
+    padding: 32px 0;
+    margin-top: auto;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.footer-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+
+/* ── RESPONSIVITÉ MOBILE ── */
+@media (max-width: 768px) {
+    .nav-links { display: none; }
+    .hero-text h1 { font-size: 1.6rem; }
+    .result-actions { flex-direction: column; }
+    .result-actions a, .result-actions form, .result-actions button { width: 100%; }
+    .footer-content { flex-direction: column; text-align: center; }
+}
+
+p {
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+}

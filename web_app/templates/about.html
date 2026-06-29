@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>À propos — CertiScan 2D</title>
+    <meta name="description" content="Découvrez les enjeux du projet CertiScan 2D, son cadre légal, ses limites techniques de lecture et le profil de son concepteur, expert en cybersécurité bancaire.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Barre de Navigation Institutionnelle -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <div class="logo-wrapper">
+                <a href="/">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="CertiScan 2D - Accueil" class="nav-logo-img">
+                </a>
+            </div>
+            <nav class="nav-links">
+                <a href="/#audit">Vérification</a>
+                <a href="/#technologie">Qu'est-ce qu'un 2D-Doc ?</a>
+                <a href="/#fonctionnement">Principes d'analyse</a>
+                <a href="/about" class="active">À propos</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="margin-top: 40px; margin-bottom: 60px;">
+        
+        <!-- SECTION 1 : GENÈSE ET ENJEUX DU PROJET -->
+        <section class="card main-card" style="padding: 40px; margin-bottom: 24px;">
+            <h1 style="color: #fff; margin-bottom: 16px;">À propos du projet CertiScan 2D</h1>
+            <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;">
+                À l’ère de l'intelligence artificielle générative, la falsification de documents administratifs est devenue industrielle. Modifier un bulletin de salaire, un avis d'imposition ou un RIB à l'aide d'outils d'édition numérique ne prend plus que quelques secondes. Face à cette menace croissante qui fragilise l'économie et la confiance numérique, <strong>CertiScan 2D</strong> propose une solution logicielle d'audit souveraine, éphémère et automatisée.
+            </p>
+            
+            <div class="grid-3" style="margin-top: 32px;">
+                <div class="info-block" style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 4px; border: 1px solid var(--border-color);">
+                    <h3 style="color: #fff; margin-bottom: 10px;">L'enjeu du secteur bancaire</h3>
+                    <p style="font-size: 0.9rem;">Dans le cadre des processus <strong>KYC (Know Your Customer)</strong> et de la lutte contre le blanchiment et le financement du terrorisme (LCB-FT), les banques ont l'obligation légale de vérifier l'identité de leurs clients et la provenance des fonds. L'intégration de la validation 2D-Doc permet de bloquer la fraude à l'entrée de manière mathématique.</p>
+                </div>
+                <div class="info-block" style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 4px; border: 1px solid var(--border-color);">
+                    <h3 style="color: #fff; margin-bottom: 10px;">Le cadre légal</h3>
+                    <p style="font-size: 0.9rem;">CertiScan 2D s'appuie sur les spécifications réglementaires du <strong>Cachet Électronique Visible (CEV)</strong> encadrées par l'ANTS. Le projet respecte scrupuleusement les exigences de la GRC en appliquant une politique <strong>zéro-trust</strong> et <strong>zéro-persistance</strong>, en stricte conformité avec le RGPD.</p>
+                </div>
+                <div class="info-block" style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 4px; border: 1px solid var(--border-color);">
+                    <h3 style="color: #fff; margin-bottom: 10px;">Au-delà du code-barres</h3>
+                    <p style="font-size: 0.9rem;">La véritable force du projet réside dans son <strong>pipeline hybride</strong>. Il ne se contente pas de décoder la signature cryptographique du Data Matrix, il extrait également le texte visible (OCR) pour s'assurer qu'aucune modification frauduleuse n'a été opérée "en clair" sur le document.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2 : DOCUMENTS SUPPORTÉS & LIMITES TECHNIQUES -->
+        <section class="grid-2" style="margin-bottom: 24px;">
+            
+            <!-- Documents supportés -->
+            <div class="card" style="padding: 30px;">
+                <h2 style="color: #fff; margin-bottom: 16px;">Périmètre des documents analysés</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Le moteur d'analyse prend nativement en charge la nomenclature officielle des types de documents dotés du standard 2D-Doc :</p>
+                
+                <div style="max-height: 350px; overflow-y: auto; background: #0d0e11; padding: 15px; border-radius: 4px; border: 1px solid var(--border-color);">
+                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; line-height: 1.8;">
+                        <li>• Justificatif de domicile / Facture</li>
+                        <li>• Avis de taxe d'habitation</li>
+                        <li>• Relevé d'Identité Bancaire (RIB)</li>
+                        <li>• Relevé d'identité SEPAmail / Relevé de compte</li>
+                        <li>• Avis d'impôt sur les revenus (V1, V2, V3, Déclaratif)</li>
+                        <li>• Bulletin de salaire / Contrat de travail</li>
+                        <li>• Autorisation de travail (Standard et AES)</li>
+                        <li>• Attestation d'Activité Professionnelle</li>
+                        <li>• Titre d'identité / Zone de Lecture Automatique (MRZ)</li>
+                        <li>• Document étranger</li>
+                        <li>• Certificat de qualité de l'air (Crit'Air V1 & V2)</li>
+                        <li>• Courrier Permis à Points / Arrêtés / Relevé d'Information</li>
+                        <li>• Certificat de réussite à l'Examen du Permis</li>
+                        <li>• Carte Mobilité Inclusion / Macaron VTC / Carte T3P</li>
+                        <li>• Certificat de cession électronique / Attestation DICEM</li>
+                        <li>• Diplôme universitaire</li>
+                        <li>• Attestation de Versement de la CVE</li>
+                        <li>• Certificat de décès (V1 & V2) / Certificat de Preuve de Vie</li>
+                        <li>• Carte Professionnelle Sapeur-Pompier / Permis de chasser</li>
+                        <li>• Licence de conducteur de train</li>
+                        <li>• Acte d'huissier de justice</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Limites de lecture -->
+            <div class="card" style="padding: 30px;">
+                <h2 style="color: #fff; margin-bottom: 16px;">Limites techniques de lecture</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px;">
+                    Bien que performant, un système automatisé basé sur la vision par ordinateur peut rencontrer des difficultés indépendantes de sa logique métier. Les faux positifs de non-concordance sont généralement liés à :
+                </p>
+                <ul style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; padding-left: 20px;">
+                    <li style="margin-bottom: 10px;"><strong>La qualité des images :</strong> Les captures de documents avec de faibles résolutions, des reflets lumineux agressifs, des pliures prononcées ou un flou de bougé altèrent la précision de l'extraction OCR de surface.</li>
+                    <li style="margin-bottom: 10px;"><strong>La distorsion géométrique :</strong> Les photographies prises de biais (angles de perspective complexes) nuisent à la géométrie parfaite requise pour décoder efficacement la matrice de pixels du Data Matrix.</li>
+                    <li style="margin-bottom: 10px;"><strong>La pixellisation et compression :</strong> Un document PDF scanné et re-compressé à de multiples reprises peut dégrader les contrastes fins indispensables à l'analyse algorithmique.</li>
+                </ul>
+                <div style="background: rgba(243, 156, 18, 0.1); border-left: 3px solid #f39c12; padding: 12px; margin-top: 20px; font-size: 0.85rem; color: #f39c12;">
+                    <strong>Note d'audit :</strong> C'est pourquoi un échec du contrôle de cohérence visuelle n'implique pas obligatoirement une fraude, mais invite simplement l'analyste à un contrôle visuel manuel approfondi.
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SECTION 3 : CONCEPTEUR / PROFIL -->
+        <section class="card main-card" style="padding: 40px; background: linear-gradient(135deg, #11141a 0%, #0d0e11 100%); border-left: 4px solid var(--primary);">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h2 style="color: #fff; margin-bottom: 8px;">À propos du concepteur</h2>
+                    <h3 style="color: var(--primary); font-weight: 500; font-size: 1.1rem; margin-bottom: 16px;">Rémy Nguyen</h3>
+                    <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">
+                        Professionnel évoluant dans le secteur bancaire, je suis développeur Python et passionné de cybersécurité. Mon orientation de carrière se dirige naturellement vers la <strong>GRC (Gouvernance, Risques et Conformité)</strong> en milieu bancaire. Ce projet matérialise ma volonté de concevoir des outils pragmatiques, sécurisés par design, répondant concrètement aux problématiques de conformité réglementaire et de gestion des risques documentaires.
+                    </p>
+                </div>
+                <div style="min-width: 250px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 4px; border: 1px solid var(--border-color);">
+                    <h4 style="color: #fff; margin-bottom: 12px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Me contacter & Contribuer</h4>
+                    <p style="font-size: 0.85rem; margin-bottom: 10px;">
+                        <strong>Email :</strong> <a href="mailto:remyng22@gmail.com" style="color: var(--primary); text-decoration: none;">remyng22@gmail.com</a>
+                    </p>
+                    <p style="font-size: 0.85rem; margin-bottom: 16px;">
+                        <strong>Code Source :</strong> <a href="https://github.com/RemyNg22/certiscan-2d" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: none;">GitHub du Projet</a>
+                    </p>
+                    <a href="https://www.linkedin.com/in/r%C3%A9my-nguyen-2204/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-block" style="text-align: center; font-size: 0.8rem; padding: 8px 0;">
+                        Voir le profil Linkedin
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Pied de page -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <p>&copy; 2026 CertiScan 2D. Application d'audit de sécurité des documents administratifs.</p>
+            <div class="footer-meta">
+                <a href="/" style="color: var(--text-muted); text-decoration: none; margin-right: 16px;">Retour à l'accueil</a>
+                <span>Analyse sécurisée sans conservation de données</span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

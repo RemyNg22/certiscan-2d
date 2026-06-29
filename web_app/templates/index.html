@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>CertiScan 2D — Vérification et conformité des codes 2D-Doc</title>
+    <meta name="description" content="Service souverain de contrôle et de vérification d'authenticité pour les documents officiels dotés d'un cachet électronique visible 2D-Doc. Analyse locale sécurisée.">
+    <meta name="keywords" content="2D-Doc, vérification document, conformité administrative, faux documents, sécurité informatique, souveraineté numérique, ANTS, OCR, audit cryptographique">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://certiscan2d.com/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://certiscan2d.com/">
+    <meta property="og:title" content="CertiScan 2D — Vérification de conformité 2D-Doc">
+    <meta property="og:description" content="Outil industriel et souverain d'audit de sécurité des signatures et métadonnées de documents officiels.">
+    <meta property="og:image" content="{{ url_for('static', filename='img/logo.png') }}">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <div class="logo-wrapper">
+                <a href="/">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="CertiScan 2D - Accueil" class="nav-logo-img">
+                </a>
+            </div>
+            <nav class="nav-links">
+                <a href="#audit" title="Accéder au terminal d'audit">Vérification</a>
+                <a href="#technologie" title="Qu'est-ce que le standard 2D-Doc ?">Qu'est-ce qu'un 2D-Doc ?</a>
+                <a href="#fonctionnement" title="Comprendre la méthodologie technique">Principes d'analyse</a>
+                <a href="/about" title="En savoir plus sur le projet">À propos</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <section id="audit" class="hero-section">
+            <div class="hero-text">
+                <h1>Contrôle et certification de documents officiels (2D-Doc)</h1>
+                <p class="hero-subtitle">Authentifiez instantanément vos justificatifs officiels. Notre système certifie la signature électronique de l'État et contrôle la conformité des informations lues sur le document.</p>
+            </div>
+
+            {% if erreur %}
+                <div class="alert alert-danger" role="alert">{{ erreur }}</div>
+            {% endif %}
+
+            <div id="upload-container" class="card main-card">
+                <form id="audit-form" action="/verifier" method="POST" enctype="multipart/form-data">
+                    <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Zone de dépôt du fichier">
+                        <p class="drop-zone-text">Sélectionnez ou glissez-déposez le document à vérifier</p>
+                        <p class="drop-zone-formats">Formats acceptés : PDF, JPG, JPEG, PNG, TIFF, BMP, HEIC, HEIF • Limite : 20 Mo</p>
+                        <input type="file" name="document" id="file-input" class="file-input" required accept=".pdf,.jpg,.jpeg,.png,.tiff,.bmp">
+                    </div>
+                    <div id="file-preview" class="file-preview" style="display: none;">
+                        <span class="file-name" id="file-name">document.pdf</span>
+                        <button type="button" id="remove-file" class="btn-remove" title="Retirer le document">Retirer</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 24px;">
+                        Lancer la vérification de conformité
+                    </button>
+                </form>
+            </div>
+
+            <div id="loading-container" class="card main-card" style="display: none;" aria-live="polite">
+                <div class="spinner-box">
+                    <img src="{{ url_for('static', filename='img/icone.png') }}" alt="Analyse en cours..." class="loading-logo-satin">
+                    <div class="spinner"></div>
+                </div>
+                <h3 id="loading-title">Analyse cryptographique en cours</h3>
+                <p id="loading-text" class="loading-phrase">Lecture de la signature scellée...</p>
+            </div>
+
+            {% if rapport %}
+            <script>
+                window.addEventListener('DOMContentLoaded', () => {
+                    document.getElementById('upload-container').style.display = 'none';
+                });
+            </script>
+            <div id="result-container" class="card main-card result-card">
+                
+                <div class="verdict-banner {% if rapport.statut == 'VALID' %}banner-success{% elif rapport.statut == 'SUSPICIOUS' %}banner-warning{% else %}banner-danger{% endif %}">
+                    <div class="verdict-title">
+                        {% if rapport.statut == "VALID" %}
+                            ✓ Document certifié conforme
+                        {% elif rapport.statut == "SUSPICIOUS" %}
+                            ⚠️ Alerte : Incohérence détectée
+                        {% else %}
+                            ✕ Signature invalide ou corrompue
+                        {% endif %}
+                    </div>
+                    <p class="verdict-subtitle">{{ rapport.message_principal }}</p>
+                </div>
+
+                <div class="meta-summary">
+                    <p><strong>Fichier analysé :</strong> {{ rapport.nom_fichier_origine }}</p>
+                    <p><strong>Typologie officielle :</strong> {{ rapport.type_document_libelle }}</p>
+                    <p><strong>Autorité émettrice :</strong> {{ rapport.autorite_certification or 'Non identifiée' }}</p>
+                </div>
+
+                <div style="background-color: rgba(217, 119, 6, 0.1); border-left: 4px solid #d97706; padding: 16px; margin-top: 16px; margin-bottom: 20px; border-radius: 0 4px 4px 0;">
+                    <div style="display: flex; align-items: flex-start;">
+                        <div style="flex-shrink: 0; margin-right: 12px; margin-top: 2px;">
+                            <svg style="height: 20px; width: 20px; color: #d97706;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.05em;">
+                                Point d'attention : Contrôle visuel de cohérence
+                            </h4>
+                            <div style="margin-top: 6px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                                <p style="margin: 0 0 8px 0;">
+                                    L'analyse automatique confirme la validité de la signature cryptographique du badge 2D-Doc. Cependant, un faussaire peut modifier graphiquement les textes visibles (nom, prénoms) sur une page tout en laissant le code sécurisé d'origine intact sur une autre.
+                                </p>
+                                <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
+                                    <li style="margin-bottom: 4px;">Assurez-vous que l'identité en tête de document correspond rigoureusement au titulaire attendu.</li>
+                                    <li style="margin-bottom: 4px;">Inspectez visuellement les zones clés pour détecter d'éventuelles traces de montage ou de masquage numérique (Altération de police, superposition).</li>
+                                    <li style="margin-bottom: 0;">En présence de documents multipages, réalisez un recoupement manuel des informations transversales.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="result-actions">
+                    <a href="/" class="btn btn-secondary">Vérifier un autre document</a>
+                    <form action="/certificat" method="POST" style="display: inline-block;">
+                        <input type="hidden" name="rapport_json" value="{{ rapport_json }}">
+                        <button type="submit" class="btn btn-primary">Télécharger l'attestation de conformité (PDF)</button>
+                    </form>
+                </div>
+
+                <div class="technical-audit-section" style="border-top: 1px solid var(--border-color); padding-top: 24px; margin-top: 24px;">
+                    <h3 class="technical-section-title">Certificat & Signature Cryptographique</h3>
+                    <div class="meta-summary" style="background-color: #0d0e11; margin-top: 12px; margin-bottom: 16px; border-style: dashed;">
+                        <p style="margin-bottom: 8px;"><strong>Algorithme standardisé :</strong> <span class="font-mono txt-success">ECDSA sur courbe (Norme ANTS)</span></p>
+                        <p style="margin-bottom: 8px;"><strong>Identifiant de la clé d'autorité :</strong> <span class="font-mono" style="font-size: 0.85rem; color: var(--text-main);">FR.ANTS.2DDOC.{{ rapport.autorite_certification or 'INCONNUE' }}.{{ rapport.identifiant_certificat or '01' }}</span></p>
+                        <p style="margin-bottom: 8px;"><strong>Registre de confiance national (TSL) :</strong> 
+                            {% if rapport.crypto_ok is true %}
+                                <span class="txt-success">✓ Certificat d'autorité authentifié et valide auprès de l'ANTS</span>
+                            {% elif rapport.crypto_ok is false %}
+                                <span class="txt-danger">▲ Sceau invalide ou certificat révoqué</span>
+                            {% else %}
+                                <span class="txt-muted">Non vérifiable (Autorité émettrice absente du registre d'État)</span>
+                            {% endif %}
+                        </p>
+                        <div style="margin-top: 12px;">
+                            <strong style="display: block; margin-bottom: 4px; font-size: 0.85rem; color: var(--text-muted);">Aperçu brut de la signature (Sceau électronique) :</strong>
+                            <div class="font-mono" style="background: #000; padding: 10px; border-radius: 4px; font-size: 0.75rem; word-break: break-all; color: var(--text-muted); max-height: 70px; overflow-y: auto;">
+                                {{ rapport.signature_apercu or 'Aucune empreinte de signature extraite.' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="technical-audit-section">
+                    <h3 class="technical-section-title">Données techniques d'audit</h3>
+                    
+                    <div class="details-content">
+                        <h4>Registre du pipeline de contrôle</h4>
+                        <div class="pipeline-list">
+                            {% for etape in rapport.etapes %}
+                            <div class="pipeline-step">
+                                <span class="step-status-text {% if etape.statut == 'ok' %}txt-success{% else %}txt-danger{% endif %}">
+                                    [{% if etape.statut == 'ok' %}OK{% else %}ÉCHEC{% endif %}]
+                                </span>
+                                <div class="step-details">
+                                    <strong>{{ etape.nom }}</strong> — {{ etape.message }}
+                                </div>
+                                {% if etape.duree_ms %}
+                                <span class="step-time">{{ etape.duree_ms | round(1) }}ms</span>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <h4>Table de recoupement des données (2D-Doc vs OCR Surface)</h4>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Champ de métadonnée</th>
+                                        <th>Valeur scellée</th>
+                                        <th>Contrôle de cohérence</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for champ, donnees in rapport.champs_verifies.items() %}
+                                    <tr>
+                                        <td class="font-mono">{{ champ }}</td>
+                                        <td>{{ donnees.attendu }}</td>
+                                        <td>
+                                            {% if donnees.statut == "MATCH" %}
+                                                <span class="txt-success">✓ Correspondance stricte</span>
+                                            {% elif donnees.statut == "CONTRADICTION" %}
+                                                <span class="txt-danger">▲ Contradiction textuelle (à vérifier)</span>
+                                            {% else %}
+                                                <span class="txt-muted">Non vérifiable (Donnée absente)</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </section>
+
+        <section id="technologie" class="info-section" style="background-color: var(--bg-card); border: 1px solid var(--border-color); padding: 40px; border-radius: 4px; margin-bottom: 24px;">
+            <h2 class="section-title" style="margin-bottom: 12px;">Comprendre le Cachet Électronique Visible (CEV) présent sur les documents officiels</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px;">
+                Le <strong>2D-Doc</strong> est un code-barres bidimensionnel hautement sécurisé (Data Matrix) conçu sous l'égide de l'<strong>ANTS</strong> (Agence Nationale des Titres Sécurisés). Il vise à sécuriser les données clés des documents papier ou PDF et à éradiquer la fraude documentaire.
+            </p>
+            <div class="grid-3">
+                <div class="info-block">
+                    <h4 style="color: #fff; margin-bottom: 8px; font-weight: 600;">Ce qu'il contient</h4>
+                    <p>Le code n'héberge pas une image numérisée du document, ce qui le rend léger et universel. Il contient un condensé de données textuelles normalisées (clés d'identification, identité, montants, dates) lié de façon indissociable à une <strong>électronique asymétrique</strong>. Ce dispositif garantit à la fois l'origine du document et la stricte confidentialité des données non encodées.</p>
+                </div>
+                <div class="info-block">
+                    <h4 style="color: #fff; margin-bottom: 8px; font-weight: 600;">Pourquoi c'est infalsifiable</h4>
+                    <p>La sécurité repose sur un mécanisme de cryptographie asymétrique. La signature est scellée mathématiquement par la clé privée exclusive de l'organisme émetteur. Si un faussaire tente de modifier le moindre caractère à l'écran ou sur le papier (un centime sur une facture, une lettre dans un nom), la clé publique de vérification invalidera instantanément l'intégrité du code lors de l'analyse.</p>
+                </div>
+                <div class="info-block">
+                    <h4 style="color: #fff; margin-bottom: 8px; font-weight: 600;">Le rôle de l'État français</h4>
+                    <p>Pour authentifier la source, l'État français gère une <strong>PKI (Infrastructure de Clés Publiques)</strong> nationale. Il centralise et publie la <strong>TSL (Trusted Service List)</strong>, le registre officiel et souverain qui répertorie les certificats et clés publiques de toutes les autorités habilitées (Ministères, CAF, banques, fournisseurs d'énergie). CertiScan 2D interroge en temps réel la conformité de cette liste à chaque audit.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="fonctionnement" class="info-section">
+            <h2 class="section-title">Le Pipeline d'Analyse Anti-Fraude</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 32px;">
+                Pour contrer la fraude avancée (qui consiste par exemple à laisser un code 2D-Doc valide mais à modifier visuellement le texte écrit en clair sur la feuille), CertiScan 2D déploie un algorithme d'audit en 3 étapes :
+            </p>
+            <div class="grid-3">
+                <div class="info-block">
+                    <div style="background-color: rgba(158, 27, 32, 0.1); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; margin-bottom: 12px; border: 1px solid var(--primary);">
+                        <span style="color: var(--primary); font-weight: 700;">01</span>
+                    </div>
+                    <h3>Décodage & Extraction</h3>
+                    <p>L'image ou le document PDF téléversé est traité instantanément en mémoire vive. Le moteur localise le composant Data Matrix, extrait les octets bruts et sépare les métadonnées de la signature cryptographique.</p>
+                </div>
+                <div class="info-block">
+                    <div style="background-color: rgba(158, 27, 32, 0.1); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; margin-bottom: 12px; border: 1px solid var(--primary);">
+                        <span style="color: var(--primary); font-weight: 700;">02</span>
+                    </div>
+                    <h3>Audit Cryptographique Éthique</h3>
+                    <p>Nous re-calculons le condensé et confrontons la signature à la liste officielle des clés de l'État français (ANTS). Cette étape garantit de manière absolue l'origine légitime du document.</p>
+                </div>
+                <div class="info-block">
+                    <div style="background-color: rgba(158, 27, 32, 0.1); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; margin-bottom: 12px; border: 1px solid var(--primary);">
+                        <span style="color: var(--primary); font-weight: 700;">03</span>
+                    </div>
+                    <h3>Recoupement Visuel OCR</h3>
+                    <p>Une intelligence artificielle de lecture optique locale (OCR) scanne la surface visible du document. Le système compare ensuite les informations lues sur le papier avec les données scellées dans le code. Toute divergence lève une alerte de falsification.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="securite" class="security-section">
+            <h2 class="section-title-small">Garanties de sécurité et traitement des données</h2>
+            <p style="margin-bottom: 24px;">Ce dispositif répond aux exigences de la souveraineté numérique. Le traitement s'exécute intégralement en mémoire vive volatile. Les documents téléversés font l'objet d'un effacement physique irréversible du disque à l'instant précis où l'analyse prend fin. Aucun stockage, historique, cookie ou transfert tiers n'est opéré.</p>
+            
+            <a href="/about" class="btn btn-secondary" title="Consulter les détails du projet CertiScan 2D">
+                En savoir plus sur le projet et le cadre légal
+            </a>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-content">
+            <p>&copy; 2026 CertiScan 2D. Application d'audit de sécurité des documents administratifs.</p>
+            <div class="footer-meta">
+                <a href="/about" style="color: var(--text-muted); text-decoration: none; margin-right: 16px;">À propos</a>
+                <span>Conforme RGPD — Traitement local immédiat</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const filePreview = document.getElementById('file-preview');
+        const fileNameSpan = document.getElementById('file-name');
+        const removeFileBtn = document.getElementById('remove-file');
+        const form = document.getElementById('audit-form');
+        const uploadContainer = document.getElementById('upload-container');
+        const loadingContainer = document.getElementById('loading-container');
+        const loadingText = document.getElementById('loading-text');
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.add('highlight'); }, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.remove('highlight'); }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if(files.length) { fileInput.files = files; updatePreview(files[0]); }
+        });
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => { if(fileInput.files.length) updatePreview(fileInput.files[0]); });
+
+        function updatePreview(file) {
+            dropZone.style.display = 'none';
+            filePreview.style.display = 'flex';
+            fileNameSpan.innerText = file.name;
+        }
+
+        removeFileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.value = '';
+            filePreview.style.display = 'none';
+            dropZone.style.display = 'block';
+        });
+
+        form.addEventListener('submit', function() {
+            uploadContainer.style.display = 'none';
+            loadingContainer.style.display = 'block';
+
+            const phrases = [
+                "Extraction de la signature numérique scellée...",
+                "Vérification cryptographique auprès de l'autorité émettrice...",
+                "Analyse des caractères de surface par vision optique...",
+                "Contrôle de la cohérence globale des métadonnées...",
+                "Finalisation du rapport d'audit..."
+            ];
+
+            let idx = 0;
+            setInterval(() => {
+                if(idx < phrases.length) {
+                    loadingText.style.opacity = 0;
+                    setTimeout(() => {
+                        loadingText.innerText = phrases[idx];
+                        loadingText.style.opacity = 1;
+                        idx++;
+                    }, 200);
+                }
+            }, 1800);
+        });
+    </script>
+</body>
+</html>

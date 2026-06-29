@@ -149,7 +149,7 @@ Fonctionnalités disponibles à `http://localhost:5000` :
 - Rapport d'analyse détaillé
 - Générateur de documents sandbox
 
-URL de production : [https://certiscan-2d.com](https://certiscan-2d.com)
+URL de production : [https://certiscan2d.com](https://certiscan2d.com)
 
 ### CLI
 

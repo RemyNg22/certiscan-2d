@@ -193,7 +193,7 @@ def verifier_document(file_path: str, nom_fichier_origine: str) -> RapportVerifi
     except extractor.ExtractionError as e:
         duree = (time.monotonic() - t0) * 1000
         etapes.append(EtapeResultat(
-            nom="Extraction du code 2D-Doc",
+            nom="Extraction du code 2D-Doc et/ou texte documentaire",
             statut="echec",
             message=str(e),
             duree_ms=round(duree, 1)))
@@ -222,7 +222,7 @@ def verifier_document(file_path: str, nom_fichier_origine: str) -> RapportVerifi
             duree = (time.monotonic() - t0) * 1000
             etapes.append(EtapeResultat(
                 nom="Analyse du 2D-Doc", statut="echec",
-                message="Code 2D-Doc présent mais structure non reconnue",
+                message="Structure non reconnue",
                 duree_ms=round(duree, 1)))
             
             return _rapport_echec(
