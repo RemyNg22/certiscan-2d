@@ -139,7 +139,8 @@ sudo apt install tesseract-ocr tesseract-ocr-fra
 ### Interface Web
 
 ```bash
-flask --app web_app/app.py run
+# Lancer l'application depuis la racine du projet
+python -m web_app.app
 # ou en production :
 gunicorn web_app.app:app
 ```
